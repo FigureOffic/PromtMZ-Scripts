@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (fixed + smooth drag + Chams + TargetHUD)
+-- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -13,7 +13,8 @@ local S = _G.PromtMZ.S or {
     Reach=false, Spin=false, Magnet=false, TP=false,
     Speed=false, Fly=false, Jump=false, Noclip=false, BHop=false,
     LeaveTp=false, Fog=true, Fullbright=false, HUD=false,
-    ESP=false, Skeleton=false, Box=false, ChinaHat=false, Particles=false, Chams=false, TargetHUD=false,
+    ESP=false, Skeleton=false, Box=false, ChinaHat=false,
+    Particles=false, Chams=false, TargetHUD=false, Music=false,
     AntiAFK=false, AutoClick=false,
 
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
@@ -88,7 +89,7 @@ local function stroke(obj, color, transparency, thickness)
     return s
 end
 
--- BLUR (создаётся один раз)
+-- BLUR
 local Blur = Lighting:FindFirstChild("PromtMZ_Blur")
 if not Blur then
     Blur = Instance.new("BlurEffect")
@@ -97,7 +98,7 @@ if not Blur then
     Blur.Parent = Lighting
 end
 
--- MAIN GUI
+-- GUI
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
@@ -106,7 +107,6 @@ pcall(function() Gui.Parent = game.CoreGui end)
 
 -- SHADOW
 local Shadow = Instance.new("Frame")
-Shadow.Name = "Shadow"
 Shadow.Size = UDim2.new(0, 700, 0, 450)
 Shadow.Position = UDim2.new(0.5, -342, 0.5, -217)
 Shadow.BackgroundColor3 = C.Shadow
@@ -123,7 +123,6 @@ Main.Name = "Main"
 Main.Size = UDim2.new(0, 700, 0, 450)
 Main.Position = UDim2.new(0.5, -350, 0.5, -225)
 Main.BackgroundColor3 = C.Cream
-Main.BackgroundTransparency = 0
 Main.BorderSizePixel = 0
 Main.Visible = false
 Main.ZIndex = 2
@@ -550,6 +549,7 @@ makeBtn(ColR, "China Hat", "ChinaHat")
 makeBtn(ColR, "Particles", "Particles")
 makeBtn(ColR, "Chams", "Chams")
 makeBtn(ColR, "TargetHUD", "TargetHUD")
+makeBtn(ColR, "Music", "Music")
 
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
@@ -603,18 +603,13 @@ local function close()
     end)
 end
 
-----------------------------------------------------------------
--- SMOOTH DRAG + INERTIA
-----------------------------------------------------------------
-
+-- SMOOTH DRAG
 local dragging = false
 local dragStart
 local startPos
-
 local velocity = Vector2.zero
 local lastMousePos
 local lastTime = os.clock()
-
 local inertiaConnection
 
 local function setWindowPosition(pos)
@@ -627,16 +622,12 @@ local function startInertia()
         inertiaConnection:Disconnect()
         inertiaConnection = nil
     end
-
     local last = os.clock()
-
     inertiaConnection = RunService.RenderStepped:Connect(function()
         if dragging then return end
-
         local now = os.clock()
         local dt = math.clamp(now - last, 0, 0.05)
         last = now
-
         if velocity.Magnitude > 2 then
             local current = Main.Position
             local nextX = current.X.Offset + velocity.X * dt
@@ -672,28 +663,21 @@ end)
 UIS.InputChanged:Connect(function(input)
     if not dragging then return end
     if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-
     local now = os.clock()
     local dt = math.max(now - lastTime, 0.001)
     local mousePos = input.Position
     local delta = mousePos - dragStart
-
     local newPos = UDim2.new(
-        startPos.X.Scale,
-        startPos.X.Offset + delta.X,
-        startPos.Y.Scale,
-        startPos.Y.Offset + delta.Y
+        startPos.X.Scale, startPos.X.Offset + delta.X,
+        startPos.Y.Scale, startPos.Y.Offset + delta.Y
     )
     setWindowPosition(newPos)
-
     local movement = mousePos - lastMousePos
     local currentVelocity = movement / dt
-
     velocity = velocity:Lerp(Vector2.new(
         math.clamp(currentVelocity.X, -2500, 2500),
         math.clamp(currentVelocity.Y, -2500, 2500)
     ), 0.35)
-
     lastMousePos = mousePos
     lastTime = now
 end)
@@ -778,4 +762,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен (smooth drag + Chams + TargetHUD)")
+print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music)")

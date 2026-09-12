@@ -378,6 +378,180 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- ================= MUSIC BAR =================
+local MusicConfig = {
+    Size = 1,
+    Position = UDim2.new(0, 22, 0, 22),
+    SongName = "After Dark",
+    ArtistName = "Mr.Kitty",
+    CoverImage = "rbxassetid://0",
+    BackgroundColor = Color3.fromRGB(42, 35, 29),
+    CardColor = Color3.fromRGB(55, 46, 38),
+    MainText = Color3.fromRGB(247, 239, 228),
+    SecondaryText = Color3.fromRGB(184, 169, 151),
+    Accent = Color3.fromRGB(224, 194, 155),
+    BackgroundTransparency = 0.04,
+    CornerRadius = 14,
+}
+
+local BASE_WIDTH = 285
+local BASE_HEIGHT = 105
+local WIDTH = BASE_WIDTH * MusicConfig.Size
+local HEIGHT = BASE_HEIGHT * MusicConfig.Size
+
+local function scaled(v) return v * MusicConfig.Size end
+
+local MusicGui = Instance.new("ScreenGui")
+MusicGui.Name = "PromtMZ_MusicBar"
+MusicGui.ResetOnSpawn = false
+MusicGui.IgnoreGuiInset = true
+MusicGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+pcall(function() MusicGui.Parent = game.CoreGui end)
+
+local MusicShadow = Instance.new("Frame")
+MusicShadow.Size = UDim2.fromOffset(WIDTH + scaled(8), HEIGHT + scaled(8))
+MusicShadow.Position = MusicConfig.Position + UDim2.fromOffset(scaled(5), scaled(6))
+MusicShadow.BackgroundColor3 = Color3.fromRGB(15, 11, 8)
+MusicShadow.BackgroundTransparency = 0.55
+MusicShadow.BorderSizePixel = 0
+MusicShadow.Visible = false
+MusicShadow.ZIndex = 1
+MusicShadow.Parent = MusicGui
+Instance.new("UICorner", MusicShadow).CornerRadius = UDim.new(0, scaled(MusicConfig.CornerRadius + 2))
+
+local MusicMain = Instance.new("Frame")
+MusicMain.Size = UDim2.fromOffset(WIDTH, HEIGHT)
+MusicMain.Position = MusicConfig.Position + UDim2.fromOffset(scaled(-12), 0)
+MusicMain.BackgroundColor3 = MusicConfig.BackgroundColor
+MusicMain.BackgroundTransparency = MusicConfig.BackgroundTransparency
+MusicMain.BorderSizePixel = 0
+MusicMain.Visible = false
+MusicMain.ZIndex = 2
+MusicMain.Parent = MusicGui
+Instance.new("UICorner", MusicMain).CornerRadius = UDim.new(0, scaled(MusicConfig.CornerRadius))
+
+local MusicBorder = Instance.new("UIStroke")
+MusicBorder.Color = MusicConfig.Accent
+MusicBorder.Thickness = scaled(1)
+MusicBorder.Transparency = 0.72
+MusicBorder.Parent = MusicMain
+
+local CoverFrame = Instance.new("Frame")
+CoverFrame.Size = UDim2.fromOffset(scaled(82), scaled(82))
+CoverFrame.Position = UDim2.fromOffset(scaled(11), scaled(11))
+CoverFrame.BackgroundColor3 = MusicConfig.CardColor
+CoverFrame.BorderSizePixel = 0
+CoverFrame.ClipsDescendants = true
+CoverFrame.ZIndex = 3
+CoverFrame.Parent = MusicMain
+Instance.new("UICorner", CoverFrame).CornerRadius = UDim.new(0, scaled(10))
+
+local Cover = Instance.new("ImageLabel")
+Cover.Size = UDim2.fromScale(1, 1)
+Cover.BackgroundTransparency = 1
+Cover.Image = MusicConfig.CoverImage
+Cover.ScaleType = Enum.ScaleType.Crop
+Cover.ZIndex = 4
+Cover.Parent = CoverFrame
+Instance.new("UICorner", Cover).CornerRadius = UDim.new(0, scaled(10))
+
+local MusicInfo = Instance.new("Frame")
+MusicInfo.Size = UDim2.new(1, scaled(-108), 1, scaled(-20))
+MusicInfo.Position = UDim2.fromOffset(scaled(103), scaled(10))
+MusicInfo.BackgroundTransparency = 1
+MusicInfo.ZIndex = 3
+MusicInfo.Parent = MusicMain
+
+local MusicLabel = Instance.new("TextLabel")
+MusicLabel.Size = UDim2.new(1, scaled(-28), 0, scaled(28))
+MusicLabel.Position = UDim2.fromOffset(0, scaled(12))
+MusicLabel.BackgroundTransparency = 1
+MusicLabel.Font = Enum.Font.GothamSemibold
+MusicLabel.TextSize = scaled(16)
+MusicLabel.TextColor3 = MusicConfig.MainText
+MusicLabel.TextXAlignment = Enum.TextXAlignment.Left
+MusicLabel.Text = MusicConfig.SongName
+MusicLabel.TextTruncate = Enum.TextTruncate.AtEnd
+MusicLabel.ZIndex = 4
+MusicLabel.Parent = MusicInfo
+
+local ArtistLabel = Instance.new("TextLabel")
+ArtistLabel.Size = UDim2.new(1, scaled(-28), 0, scaled(20))
+ArtistLabel.Position = UDim2.fromOffset(0, scaled(40))
+ArtistLabel.BackgroundTransparency = 1
+ArtistLabel.Font = Enum.Font.Gotham
+ArtistLabel.TextSize = scaled(11)
+ArtistLabel.TextColor3 = MusicConfig.SecondaryText
+ArtistLabel.TextXAlignment = Enum.TextXAlignment.Left
+ArtistLabel.Text = MusicConfig.ArtistName
+ArtistLabel.TextTruncate = Enum.TextTruncate.AtEnd
+ArtistLabel.ZIndex = 4
+ArtistLabel.Parent = MusicInfo
+
+local ProgressBg = Instance.new("Frame")
+ProgressBg.Size = UDim2.new(1, scaled(-20), 0, scaled(4))
+ProgressBg.Position = UDim2.new(0, 0, 1, scaled(-7))
+ProgressBg.BackgroundColor3 = Color3.fromRGB(83, 70, 58)
+ProgressBg.BorderSizePixel = 0
+ProgressBg.ZIndex = 4
+ProgressBg.Parent = MusicInfo
+Instance.new("UICorner", ProgressBg).CornerRadius = UDim.new(1, 0)
+
+local Progress = Instance.new("Frame")
+Progress.Size = UDim2.fromScale(0.35, 1)
+Progress.BackgroundColor3 = MusicConfig.Accent
+Progress.BorderSizePixel = 0
+Progress.ZIndex = 5
+Progress.Parent = ProgressBg
+Instance.new("UICorner", Progress).CornerRadius = UDim.new(1, 0)
+
+local MusicClose = Instance.new("TextButton")
+MusicClose.Size = UDim2.fromOffset(scaled(22), scaled(22))
+MusicClose.Position = UDim2.new(1, scaled(-27), 0, scaled(7))
+MusicClose.BackgroundTransparency = 1
+MusicClose.Font = Enum.Font.GothamBold
+MusicClose.TextSize = scaled(13)
+MusicClose.TextColor3 = MusicConfig.SecondaryText
+MusicClose.Text = "×"
+MusicClose.AutoButtonColor = false
+MusicClose.ZIndex = 10
+MusicClose.Parent = MusicMain
+
+MusicClose.MouseButton1Click:Connect(function()
+    MusicMain.Visible = false
+    MusicShadow.Visible = false
+end)
+
+local function showMusicBar()
+    if not S.Music then
+        MusicMain.Visible = false
+        MusicShadow.Visible = false
+        return
+    end
+    MusicMain.Visible = true
+    MusicShadow.Visible = true
+    MusicMain.Position = MusicConfig.Position + UDim2.fromOffset(scaled(-12), 0)
+    MusicShadow.Position = MusicConfig.Position + UDim2.fromOffset(scaled(-7), scaled(6))
+    MusicMain.BackgroundTransparency = 1
+    TweenService:Create(MusicMain, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+        Position = MusicConfig.Position,
+        BackgroundTransparency = MusicConfig.BackgroundTransparency
+    }):Play()
+    TweenService:Create(MusicShadow, TweenInfo.new(0.3, Enum.EasingStyle.Quint), {
+        Position = MusicConfig.Position + UDim2.fromOffset(scaled(5), scaled(6)),
+        BackgroundTransparency = 0.55
+    }):Play()
+end
+
+RunService.RenderStepped:Connect(function()
+    if S.Music and not MusicMain.Visible then
+        showMusicBar()
+    elseif not S.Music and MusicMain.Visible then
+        MusicMain.Visible = false
+        MusicShadow.Visible = false
+    end
+end)
+
 -- ================= ESP / SKELETON / BOX =================
 local ok = pcall(function() return Drawing.new("Text") end)
 if not ok then return end
@@ -529,4 +703,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams + targetHUD)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music)")

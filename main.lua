@@ -5,11 +5,8 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local LP = Players.LocalPlayer
 
--- Уникальные имена
-local UNIQUE = "PZ_" .. tostring(math.random(10000, 99999))
-
-_G[UNIQUE] = _G[UNIQUE] or {}
-local S = _G[UNIQUE].S or {
+_G.PromtMZ = _G.PromtMZ or {}
+local S = _G.PromtMZ.S or {
     KillAura=false, Aimbot=false, FarAim=false, AutoShot=false,
     Reach=false, Spin=false, Magnet=false, TP=false,
     Speed=false, Fly=false, Jump=false, Noclip=false, BHop=false,
@@ -24,20 +21,12 @@ local S = _G[UNIQUE].S or {
     AutoShotRange=200, AutoShotDelay=0.01, AutoShotFOV=30, AutoShotPredict=1.0,
     ParticleColor=Color3.fromRGB(255,100,200), ParticleSize=1.0, ParticleLifetime=1.5
 }
-_G[UNIQUE].S = S
-
--- Проверка античита
-local antiCheatFound = false
-for _, obj in ipairs(game:GetService("CoreGui"):GetDescendants()) do
-    if obj.Name:lower():find("anticheat") or obj.Name:lower():find("guard") or obj.Name:lower():find("ac") then
-        antiCheatFound = true
-        break
-    end
-end
+_G.PromtMZ.S = S
 
 local Gui = Instance.new("ScreenGui")
-Gui.Name = UNIQUE
+Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() Gui.Parent = game.CoreGui end)
 
 local Main = Instance.new("Frame")
@@ -47,6 +36,7 @@ Main.Position = UDim2.new(0.5, -350, 0.5, -225)
 Main.BackgroundColor3 = Color3.fromRGB(20,20,25)
 Main.BorderSizePixel = 0
 Main.Visible = false
+Main.ZIndex = 1
 Main.Parent = Gui
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
 
@@ -59,6 +49,7 @@ Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.TextSize = 20
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 5
 Title.Parent = Main
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0,10)
 
@@ -67,6 +58,7 @@ local function makeCol(name, x)
     C.Size = UDim2.new(0, 160, 1, -60)
     C.Position = UDim2.new(0, x, 0, 50)
     C.BackgroundTransparency = 1
+    C.ZIndex = 1
     C.Parent = Main
     local L = Instance.new("TextLabel")
     L.Size = UDim2.new(1, 0, 0, 25)
@@ -75,6 +67,7 @@ local function makeCol(name, x)
     L.TextColor3 = Color3.fromRGB(0,200,255)
     L.TextSize = 14
     L.Font = Enum.Font.GothamBold
+    L.ZIndex = 5
     L.Parent = C
     local F = Instance.new("ScrollingFrame")
     F.Size = UDim2.new(1, 0, 1, -30)
@@ -82,6 +75,7 @@ local function makeCol(name, x)
     F.BackgroundTransparency = 1
     F.BorderSizePixel = 0
     F.ScrollBarThickness = 3
+    F.ZIndex = 2
     F.CanvasSize = UDim2.new(0, 0, 0, 500)
     F.Parent = C
     local L2 = Instance.new("UIListLayout")
@@ -95,6 +89,7 @@ local ColM = makeCol("MOVEMENT", 180)
 local ColR = makeCol("RENDER", 350)
 local ColX = makeCol("MISC", 520)
 
+-- Панель настроек
 local Panel = Instance.new("Frame")
 Panel.Name = "SettingsPanel"
 Panel.Size = UDim2.new(0, 280, 0, 400)
@@ -102,6 +97,7 @@ Panel.Position = UDim2.new(1, 10, 0, 50)
 Panel.BackgroundColor3 = Color3.fromRGB(25,25,30)
 Panel.BorderSizePixel = 0
 Panel.Visible = false
+Panel.ZIndex = 20
 Panel.Parent = Main
 Instance.new("UICorner", Panel).CornerRadius = UDim.new(0,8)
 
@@ -122,6 +118,8 @@ PanelScroll.Position = UDim2.new(0, 5, 0, 35)
 PanelScroll.BackgroundTransparency = 1
 PanelScroll.BorderSizePixel = 0
 PanelScroll.ScrollBarThickness = 3
+PanelScroll.ZIndex = 21
+PanelScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
 PanelScroll.Parent = Panel
 
 local PanelLayout = Instance.new("UIListLayout")
@@ -132,6 +130,7 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, 0, 0, 50)
     Container.BackgroundTransparency = 1
+    Container.ZIndex = 25
     Container.Parent = parent
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, 0, 0, 20)
@@ -141,18 +140,21 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     Label.TextSize = 12
     Label.Font = Enum.Font.Gotham
     Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 26
     Label.Parent = Container
     local Bg = Instance.new("Frame")
     Bg.Size = UDim2.new(1, 0, 0, 10)
     Bg.Position = UDim2.new(0, 0, 0, 25)
     Bg.BackgroundColor3 = Color3.fromRGB(40,40,50)
     Bg.BorderSizePixel = 0
+    Bg.ZIndex = 26
     Bg.Parent = Container
     Instance.new("UICorner", Bg).CornerRadius = UDim.new(0,5)
     local Fill = Instance.new("Frame")
     Fill.Size = UDim2.new((currentV - minV) / (maxV - minV), 0, 1, 0)
     Fill.BackgroundColor3 = Color3.fromRGB(0,120,255)
     Fill.BorderSizePixel = 0
+    Fill.ZIndex = 27
     Fill.Parent = Bg
     Instance.new("UICorner", Fill).CornerRadius = UDim.new(0,5)
     local dragging = false
@@ -224,6 +226,7 @@ local function openSettings(name, key)
         Info.TextColor3 = Color3.fromRGB(150,150,150)
         Info.TextSize = 12
         Info.Font = Enum.Font.Gotham
+        Info.ZIndex = 25
         Info.Parent = PanelScroll
     end
 end
@@ -231,19 +234,25 @@ end
 local function makeBtn(parent, name, key)
     local B = Instance.new("TextButton")
     B.Size = UDim2.new(1, 0, 0, 30)
-    B.BackgroundColor3 = S[key] and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+    B.BackgroundColor3 = (S[key] == true) and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
     B.BorderSizePixel = 0
     B.Text = "  " .. name
     B.TextColor3 = Color3.fromRGB(255,255,255)
     B.TextSize = 12
     B.Font = Enum.Font.Gotham
     B.TextXAlignment = Enum.TextXAlignment.Left
+    B.ZIndex = 10
+    B.Active = true
+    B.AutoButtonColor = false
     B.Parent = parent
     Instance.new("UICorner", B).CornerRadius = UDim.new(0,5)
+
     B.MouseButton1Click:Connect(function()
         S[key] = not S[key]
-        B.BackgroundColor3 = S[key] and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+        B.BackgroundColor3 = (S[key] == true) and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+        print("[PromtMZ]", name, "=", tostring(S[key]))
     end)
+
     B.MouseButton2Click:Connect(function()
         openSettings(name, key)
     end)
@@ -328,7 +337,7 @@ end)
 
 -- HUD
 local HudGui = Instance.new("ScreenGui")
-HudGui.Name = UNIQUE .. "_HUD"
+HudGui.Name = "PromtMZ_HUD"
 HudGui.ResetOnSpawn = false
 pcall(function() HudGui.Parent = game.CoreGui end)
 
@@ -365,7 +374,7 @@ RunService.RenderStepped:Connect(function()
         hudLabels = {}
         return
     end
-    Watermark.Text = "  PromtMZ | " .. LP.Name .. (antiCheatFound and " | AC" or "")
+    Watermark.Text = "  PromtMZ | " .. LP.Name
     for _, l in ipairs(hudLabels) do l:Destroy() end
     hudLabels = {}
     for k, v in pairs(S) do
@@ -384,4 +393,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] main загружен | antiCheat:", antiCheatFound)
+print("[PromtMZ] main загружен")

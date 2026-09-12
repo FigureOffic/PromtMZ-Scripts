@@ -136,7 +136,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot
+-- Aimbot (сначала без стены, потом остальные)
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
@@ -173,11 +173,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ==================================================
--- FAR AIM — сначала видимая (в голову), потом за стеной (в последний видимый кусок)
--- ==================================================
-local lastVisiblePos = {}
-
+-- FarAim (без кусков — всегда в голову)
 RunService.RenderStepped:Connect(function()
     if not S.FarAim or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
@@ -210,41 +206,21 @@ RunService.RenderStepped:Connect(function()
     if not visibleTarget then
         for _, t in ipairs(targets) do
             local d = (myHead.Position - t.head.Position).Magnitude
-            if d < blockedDist and not isVisible(t) then
+            if d < blockedDist then
                 blockedDist = d
                 blockedTarget = t
             end
         end
     end
 
-    local aimPos = nil
-
-    if visibleTarget then
-        aimPos = visibleTarget.head.Position
-        lastVisiblePos[visibleTarget.player] = aimPos
-    end
-
-    if blockedTarget then
-        local lastPos = lastVisiblePos[blockedTarget.player]
-        if lastPos then
-            aimPos = lastPos
-        else
-            local torso = blockedTarget.char:FindFirstChild("UpperTorso") or blockedTarget.char:FindFirstChild("Torso")
-            if torso then
-                aimPos = torso.Position
-            else
-                aimPos = blockedTarget.head.Position
-            end
-        end
-    end
-
-    if aimPos then
-        local newCFrame = CFrame.lookAt(myHead.Position, aimPos)
+    local target = visibleTarget or blockedTarget
+    if target then
+        local newCFrame = CFrame.lookAt(myHead.Position, target.head.Position)
         Cam.CFrame = Cam.CFrame:Lerp(newCFrame, S.FarAimS)
     end
 end)
 
--- AUTOSHOT — супер быстрые клики, пока прицел на голове
+-- AUTOSHOT — клики пока прицел на голове
 RunService.RenderStepped:Connect(function()
     if not S.AutoShot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")

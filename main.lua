@@ -1,4 +1,4 @@
--- PromtMZ — full version (GUI + HUD + fixed Visuals)
+-- PromtMZ — full version (GUI + HUD + fixed Visuals + fast Aimbot)
 -- Open: RightShift or 2
 -- LMB - toggle, RMB - settings
 
@@ -25,13 +25,13 @@ local S = {
     AutoShotRange = 200, AutoShotDelay = 0.01, AutoShotFOV = 30, AutoShotPredict = 1.0
 }
 
--- ================= GUI =================
+-- GUI
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
 Gui.Parent = game.CoreGui
 
--- ================= HUD =================
+-- HUD
 local HudGui = Instance.new("ScreenGui")
 HudGui.Name = "PromtMZ_HUD"
 HudGui.ResetOnSpawn = false
@@ -117,7 +117,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ================= MAIN GUI =================
+-- Main
 local Main = Instance.new("Frame")
 Main.Size = UDim2.new(0, 700, 0, 450)
 Main.Position = UDim2.new(0.5, -350, 0.5, -225)
@@ -145,7 +145,6 @@ local function makeCol(name, x)
     C.Position = UDim2.new(0, x, 0, 50)
     C.BackgroundTransparency = 1
     C.Parent = Main
-
     local L = Instance.new("TextLabel")
     L.Size = UDim2.new(1, 0, 0, 25)
     L.BackgroundTransparency = 1
@@ -154,7 +153,6 @@ local function makeCol(name, x)
     L.TextSize = 14
     L.Font = Enum.Font.GothamBold
     L.Parent = C
-
     local F = Instance.new("ScrollingFrame")
     F.Size = UDim2.new(1, 0, 1, -30)
     F.Position = UDim2.new(0, 0, 0, 28)
@@ -162,11 +160,9 @@ local function makeCol(name, x)
     F.BorderSizePixel = 0
     F.ScrollBarThickness = 3
     F.Parent = C
-
     local L2 = Instance.new("UIListLayout")
     L2.Padding = UDim.new(0, 6)
     L2.Parent = F
-
     return F
 end
 
@@ -175,7 +171,7 @@ local ColM = makeCol("MOVEMENT", 180)
 local ColR = makeCol("RENDER", 350)
 local ColX = makeCol("MISC", 520)
 
--- ================= SETTINGS PANEL =================
+-- Panel
 local Panel = Instance.new("Frame")
 Panel.Size = UDim2.new(0, 300, 0, 400)
 Panel.Position = UDim2.new(1, 10, 0, 50)
@@ -213,7 +209,6 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     Container.Size = UDim2.new(1, 0, 0, 50)
     Container.BackgroundTransparency = 1
     Container.Parent = parent
-
     local Label = Instance.new("TextLabel")
     Label.Size = UDim2.new(1, 0, 0, 20)
     Label.BackgroundTransparency = 1
@@ -223,7 +218,6 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     Label.Font = Enum.Font.Gotham
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = Container
-
     local Bg = Instance.new("Frame")
     Bg.Size = UDim2.new(1, 0, 0, 10)
     Bg.Position = UDim2.new(0, 0, 0, 25)
@@ -231,16 +225,13 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     Bg.BorderSizePixel = 0
     Bg.Parent = Container
     Instance.new("UICorner", Bg).CornerRadius = UDim.new(0,5)
-
     local Fill = Instance.new("Frame")
     Fill.Size = UDim2.new((currentV - minV) / (maxV - minV), 0, 1, 0)
     Fill.BackgroundColor3 = Color3.fromRGB(0,120,255)
     Fill.BorderSizePixel = 0
     Fill.Parent = Bg
     Instance.new("UICorner", Fill).CornerRadius = UDim.new(0,5)
-
     local dragging = false
-
     local function update(input)
         local rel = math.clamp((input.Position.X - Bg.AbsolutePosition.X) / Bg.AbsoluteSize.X, 0, 1)
         Fill.Size = UDim2.new(rel, 0, 1, 0)
@@ -248,7 +239,6 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
         Label.Text = label .. ": " .. string.format("%.2f", val)
         callback(val)
     end
-
     Bg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
@@ -275,11 +265,9 @@ local function openSettings(name, key)
     currentOpen = name
     Panel.Visible = true
     PanelTitle.Text = name .. " Settings"
-
     for _, c in ipairs(PanelScroll:GetChildren()) do
         if c:IsA("Frame") or c:IsA("TextButton") then c:Destroy() end
     end
-
     if name == "KillAura" or name == "Aimbot" then
         makeSlider(PanelScroll, "Radius", 1, 20, S.ReachV, function(v) S.ReachV = v end)
         makeSlider(PanelScroll, "Smooth", 0.01, 1, S.AimS, function(v) S.AimS = v end)
@@ -337,12 +325,10 @@ local function makeBtn(parent, name, key)
     B.TextXAlignment = Enum.TextXAlignment.Left
     B.Parent = parent
     Instance.new("UICorner", B).CornerRadius = UDim.new(0,5)
-
     B.MouseButton1Click:Connect(function()
         S[key] = not S[key]
         B.BackgroundColor3 = S[key] and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
     end)
-
     B.MouseButton2Click:Connect(function()
         openSettings(name, key)
     end)
@@ -426,7 +412,6 @@ end)
 
 -- ================= FUNCTIONS =================
 
--- Fog
 RunService.RenderStepped:Connect(function()
     if S.Fog then
         Lighting.FogColor = S.FogColor
@@ -439,21 +424,18 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Speed
 RunService.RenderStepped:Connect(function()
     if S.Speed and LP.Character and LP.Character:FindFirstChild("Humanoid") then
         LP.Character.Humanoid.WalkSpeed = S.SpeedV
     end
 end)
 
--- Jump
 RunService.RenderStepped:Connect(function()
     if S.Jump and LP.Character and LP.Character:FindFirstChild("Humanoid") then
         LP.Character.Humanoid.JumpPower = S.JumpV
     end
 end)
 
--- Fly
 RunService.RenderStepped:Connect(function()
     if not S.Fly then return end
     if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
@@ -468,7 +450,6 @@ RunService.RenderStepped:Connect(function()
     hrp.Velocity = d * (S.FlyV * 10)
 end)
 
--- Noclip
 RunService.Stepped:Connect(function()
     if not S.Noclip then return end
     if LP.Character then
@@ -478,7 +459,6 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Fullbright
 RunService.RenderStepped:Connect(function()
     if S.Fullbright then
         Lighting.Ambient = Color3.fromRGB(255,255,255)
@@ -489,7 +469,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- BunnyHop
 local bhop = 0
 RunService.RenderStepped:Connect(function()
     if not S.BHop then bhop = 0 return end
@@ -503,7 +482,6 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- LeaveTp
 local lastTpTime = 0
 RunService.RenderStepped:Connect(function()
     if not S.LeaveTp then return end
@@ -543,7 +521,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot
+-- Aimbot (fast + smooth)
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot then return end
     if not LP.Character then return end
@@ -580,10 +558,26 @@ RunService.RenderStepped:Connect(function()
     end
 
     local target = findTarget(true) or findTarget(false)
-    if target and target.Character and target.Character:FindFirstChild("Head") then
-        local newCFrame = CFrame.lookAt(myHead.Position, target.Character.Head.Position)
-        Cam.CFrame = Cam.CFrame:Lerp(newCFrame, S.AimS)
-    end
+    if not (target and target.Character and target.Character:FindFirstChild("Head")) then return end
+
+    local tHead = target.Character.Head
+    local tHrp = target.Character:FindFirstChild("HumanoidRootPart")
+    local tVel = tHrp and tHrp.Velocity or Vector3.new()
+
+    local dist = (myHead.Position - tHead.Position).Magnitude
+    local travelTime = math.clamp(dist / 2500, 0.005, 0.15)
+    local predictedPos = tHead.Position + tVel * travelTime
+
+    local dynamicSmooth = S.AimS
+    if dist > 50 then dynamicSmooth = dynamicSmooth + (dist - 50) / 500 end
+    local speed = tVel.Magnitude
+    if speed > 15 then dynamicSmooth = dynamicSmooth + speed / 300 end
+    if tVel.Y > 5 then dynamicSmooth = dynamicSmooth + 0.25 end
+    if dynamicSmooth > 1 then dynamicSmooth = 1 end
+    if dynamicSmooth < 0.05 then dynamicSmooth = 0.05 end
+
+    local newCFrame = CFrame.lookAt(myHead.Position, predictedPos)
+    Cam.CFrame = Cam.CFrame:Lerp(newCFrame, dynamicSmooth)
 end)
 
 -- FarAim
@@ -606,322 +600,4 @@ RunService.RenderStepped:Connect(function()
     if not (closest and closest.Character and closest.Character:FindFirstChild("Head")) then return end
     local tHead = closest.Character.Head
     local tHrp = closest.Character:FindFirstChild("HumanoidRootPart")
-    local tVel = tHrp and tHrp.Velocity or Vector3.new()
-    local dist = (myHead.Position - tHead.Position).Magnitude
-    local tTime = math.clamp(dist / 2000, 0.01, 0.2)
-    local pred = tHead.Position + tVel * tTime
-    local sm = S.FarAimS
-    if tVel.Y > 5 then sm = S.FarAimFastJump
-    elseif tVel.Magnitude > 20 then sm = math.min(S.FarAimS * 1.3, 1) end
-    local newCFrame = CFrame.lookAt(myHead.Position, pred)
-    Cam.CFrame = Cam.CFrame:Lerp(newCFrame, sm)
-end)
-
--- AutoShot
-local lastShot = 0
-RunService.RenderStepped:Connect(function()
-    if not S.AutoShot then return end
-    if not LP.Character then return end
-    local now = tick()
-    if now - lastShot < S.AutoShotDelay then return end
-    local myHead = LP.Character:FindFirstChild("Head")
-    if not myHead then return end
-    local closest, shortest = nil, S.AutoShotRange
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character then
-            local head = p.Character:FindFirstChild("Head")
-            local hum = p.Character:FindFirstChild("Humanoid")
-            if head and hum and hum.Health > 0 then
-                local d = (myHead.Position - head.Position).Magnitude
-                if d < shortest then shortest = d; closest = p end
-            end
-        end
-    end
-    if not closest or not closest.Character then return end
-    local head = closest.Character:FindFirstChild("Head")
-    local hrp = closest.Character:FindFirstChild("HumanoidRootPart")
-    if not head then return end
-    local tVel = hrp and hrp.Velocity * S.AutoShotPredict or Vector3.new()
-    local dist = (myHead.Position - head.Position).Magnitude
-    local tTime = math.clamp(dist / 2000, 0.01, 0.3)
-    local pred = head.Position + tVel * tTime
-    local rp = RaycastParams.new()
-    rp.FilterType = Enum.RaycastFilterType.Exclude
-    rp.FilterDescendantsInstances = {LP.Character}
-    local rr = workspace:Raycast(myHead.Position, pred - myHead.Position, rp)
-    local vis = false
-    if rr then
-        if rr.Instance and rr.Instance:IsDescendantOf(closest.Character) then vis = true end
-    else vis = true end
-    if not vis then return end
-    local sp, onScr = Cam:WorldToViewportPoint(pred)
-    if not onScr then return end
-    local vp = Cam.ViewportSize
-    local cx, cy = vp.X / 2, vp.Y / 2
-    local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
-    if dC > S.AutoShotFOV then return end
-    local cr = workspace:Raycast(myHead.Position, head.Position - myHead.Position, rp)
-    if cr and cr.Instance and not cr.Instance:IsDescendantOf(closest.Character) then return end
-    local tool = LP.Character:FindFirstChildOfClass("Tool")
-    if tool then tool:Activate() end
-    if mouse1click then pcall(mouse1click) end
-    lastShot = now
-end)
-
--- Spin
-RunService.RenderStepped:Connect(function()
-    if not S.Spin then return end
-    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = LP.Character.HumanoidRootPart
-    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(S.SpinV), 0)
-end)
-
--- Magnet
-RunService.RenderStepped:Connect(function()
-    if not S.Magnet then return end
-    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
-    local hrp = LP.Character.HumanoidRootPart
-    local c, s = nil, S.MagR
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
-            if d < s then s = d; c = p end
-        end
-    end
-    if c then hrp.Velocity = (c.Character.HumanoidRootPart.Position - hrp.Position).Unit * (S.MagS * 10) end
-end)
-
--- TP
-RunService.RenderStepped:Connect(function()
-    if not S.TP then return end
-    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
-    local c, s = nil, math.huge
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
-            local d = (LP.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
-            if d < s then s = d; c = p end
-        end
-    end
-    if c then LP.Character.HumanoidRootPart.CFrame = c.Character.HumanoidRootPart.CFrame + Vector3.new(0,3,0) end
-end)
-
--- AntiAFK
-task.spawn(function()
-    while task.wait(60) do
-        if S.AntiAFK then
-            local vu = game:GetService("VirtualUser")
-            vu:CaptureController()
-            vu:ClickButton2(Vector2.new())
-        end
-    end
-end)
-
--- AutoClick
-task.spawn(function()
-    while task.wait(0.1) do
-        if S.AutoClick then
-            local tool = LP.Character and LP.Character:FindFirstChildOfClass("Tool")
-            if tool then tool:Activate() end
-        end
-    end
-end)
-
--- ================= VISUALS =================
-local ok = pcall(function() return Drawing.new("Text") end)
-if ok then
-    -- ESP
-    local function espFor(p)
-        local e = Drawing.new("Text")
-        e.Visible = false
-        e.Color = Color3.fromRGB(255, 50, 50)
-        e.Size = 16
-        e.Center = true
-        e.Outline = true
-        e.Font = 2
-        RunService.RenderStepped:Connect(function()
-            if not S.ESP then e.Visible = false return end
-            local char = p.Character
-            local hum = char and char:FindFirstChild("Humanoid")
-            local head = char and char:FindFirstChild("Head")
-            if not char or not hum or not head or hum.Health <= 0 then
-                e.Visible = false
-                return
-            end
-            local pos, on = Cam:WorldToViewportPoint(head.Position)
-            if on then
-                e.Position = Vector2.new(pos.X, pos.Y - 25)
-                e.Text = p.Name .. " | " .. math.floor(hum.Health)
-                e.Visible = true
-            else
-                e.Visible = false
-            end
-        end)
-    end
-
-    -- Skeleton
-    local function skelFor(p)
-        local lines = {}
-        for i = 1, 5 do
-            local l = Drawing.new("Line")
-            l.Visible = false
-            l.Color = Color3.fromRGB(0, 255, 100)
-            l.Thickness = 1.5
-            table.insert(lines, l)
-        end
-        RunService.RenderStepped:Connect(function()
-            if not S.Skeleton then
-                for _, l in ipairs(lines) do l.Visible = false end
-                return
-            end
-            local char = p.Character
-            local hum = char and char:FindFirstChild("Humanoid")
-            if not char or not hum or hum.Health <= 0 then
-                for _, l in ipairs(lines) do l.Visible = false end
-                return
-            end
-            local head = char:FindFirstChild("Head")
-            local torso = char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
-            local larm = char:FindFirstChild("LeftUpperArm") or char:FindFirstChild("Left Arm") or char:FindFirstChild("LeftArm")
-            local rarm = char:FindFirstChild("RightUpperArm") or char:FindFirstChild("Right Arm") or char:FindFirstChild("RightArm")
-            local lleg = char:FindFirstChild("LeftUpperLeg") or char:FindFirstChild("Left Leg") or char:FindFirstChild("LeftLeg")
-            local rleg = char:FindFirstChild("RightUpperLeg") or char:FindFirstChild("Right Leg") or char:FindFirstChild("RightLeg")
-            if not head or not torso then
-                for _, l in ipairs(lines) do l.Visible = false end
-                return
-            end
-            local hp, ho = Cam:WorldToViewportPoint(head.Position)
-            local tp, to = Cam:WorldToViewportPoint(torso.Position)
-            if ho and to then
-                lines[1].From = Vector2.new(hp.X, hp.Y)
-                lines[1].To = Vector2.new(tp.X, tp.Y)
-                lines[1].Visible = true
-                local function setLine(i, part)
-                    if part then
-                        local a, b = Cam:WorldToViewportPoint(part.Position)
-                        if b then
-                            lines[i].From = Vector2.new(tp.X, tp.Y)
-                            lines[i].To = Vector2.new(a.X, a.Y)
-                            lines[i].Visible = true
-                        else
-                            lines[i].Visible = false
-                        end
-                    else
-                        lines[i].Visible = false
-                    end
-                end
-                setLine(2, larm)
-                setLine(3, rarm)
-                setLine(4, lleg)
-                setLine(5, rleg)
-            else
-                for _, l in ipairs(lines) do l.Visible = false end
-            end
-        end)
-    end
-
-    -- Box
-    local function boxFor(p)
-        local b = Drawing.new("Square")
-        b.Visible = false
-        b.Color = Color3.fromRGB(255, 50, 50)
-        b.Thickness = 1.5
-        b.Filled = false
-        RunService.RenderStepped:Connect(function()
-            if not S.Box then b.Visible = false return end
-            local char = p.Character
-            local hum = char and char:FindFirstChild("Humanoid")
-            if not char or not hum or hum.Health <= 0 then
-                b.Visible = false
-                return
-            end
-            local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
-            local head = char:FindFirstChild("Head")
-            if not hrp or not head then
-                b.Visible = false
-                return
-            end
-            local pos, on = Cam:WorldToViewportPoint(hrp.Position)
-            local hpos, hon = Cam:WorldToViewportPoint(head.Position)
-            if on and hon then
-                local top = hpos.Y - 25
-                local bottom = pos.Y + 35
-                local height = bottom - top
-                local width = height * 0.5
-                b.Size = Vector2.new(width, height)
-                b.Position = Vector2.new(pos.X - width / 2, top)
-                b.Visible = true
-            else
-                b.Visible = false
-            end
-        end)
-    end
-
-    -- China Hat
-    local hats = {}
-    local function createHat(p)
-        if not p.Character then return end
-        local head = p.Character:FindFirstChild("Head")
-        if not head then return end
-        if hats[p] and hats[p].Parent then return end
-        local hat = Instance.new("Part")
-        hat.Name = "PromtMZ_ChinaHat"
-        hat.Shape = Enum.PartType.Cylinder
-        hat.Size = Vector3.new(0.2, 3, 3)
-        hat.Color = Color3.fromRGB(255, 0, 0)
-        hat.Material = Enum.Material.Neon
-        hat.CanCollide = false
-        hat.Anchored = false
-        hat.Massless = true
-        hat.Parent = head
-        hats[p] = hat
-    end
-
-    RunService.RenderStepped:Connect(function()
-        for p, hat in pairs(hats) do
-            if hat and hat.Parent then
-                if not S.ChinaHat then
-                    hat.Transparency = 1
-                else
-                    hat.Transparency = 0
-                    local head = p.Character and p.Character:FindFirstChild("Head")
-                    if head then
-                        hat.CFrame = head.CFrame * CFrame.new(0, 2.5, 0) * CFrame.Angles(0, 0, math.rad(90))
-                    end
-                end
-            end
-        end
-    end)
-
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LP then
-            espFor(p); skelFor(p); boxFor(p)
-            p.CharacterAdded:Connect(function()
-                task.wait(0.5)
-                createHat(p)
-            end)
-            if p.Character then createHat(p) end
-        end
-    end
-    Players.PlayerAdded:Connect(function(p)
-        if p ~= LP then
-            espFor(p); skelFor(p); boxFor(p)
-            p.CharacterAdded:Connect(function()
-                task.wait(0.5)
-                createHat(p)
-            end)
-        end
-    end)
-    Players.PlayerRemoving:Connect(function(p)
-        if hats[p] then
-            hats[p]:Destroy()
-            hats[p] = nil
-        end
-    end)
-end
-
--- Notification
-game:GetService("StarterGui"):SetCore("SendNotification", {
-    Title = "PromtMZ",
-    Text = "RightShift или 2 — меню. ПКМ по функции — настройки.",
-    Duration = 5
-})
+    local tVel = tHrp and tHrp.V

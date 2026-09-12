@@ -136,14 +136,16 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot (сначала без стены, потом остальные)
+-- ==================================================
+-- AIMBOT — быстрый с плавностью 0.15
+-- ==================================================
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
-    local targets = getTargets()
-    
+
     local function findTarget(checkWalls)
+        local targets = getTargets()
         local closest, shortest = nil, S.ReachV
         for _, t in ipairs(targets) do
             local d = (myHead.Position - t.head.Position).Magnitude
@@ -165,7 +167,7 @@ RunService.RenderStepped:Connect(function()
         end
         return closest
     end
-    
+
     local target = findTarget(true) or findTarget(false)
     if target then
         local newCFrame = CFrame.lookAt(myHead.Position, target.head.Position)
@@ -190,7 +192,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- AutoShot (стреляет один раз при выходе цели из-за стены, не спамит)
+-- ==================================================
+-- AUTOSHOT — супер быстрый, но не по кд
+-- ==================================================
 local lastShot = 0
 local lastTargetPlayer = nil
 local lastSeenTime = 0
@@ -210,7 +214,7 @@ RunService.RenderStepped:Connect(function()
         return
     end
     
-    -- Ищем ближайшую ВИДИМУЮ цель
+    -- Ближайшая ВИДИМАЯ цель
     local closest, shortest = nil, S.AutoShotRange
     for _, t in ipairs(targets) do
         local d = (myHead.Position - t.head.Position).Magnitude
@@ -249,14 +253,12 @@ RunService.RenderStepped:Connect(function()
     local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
     if dC > S.AutoShotFOV then return end
     
-    -- Стреляем ТОЛЬКО если это новая цель
+    -- Мгновенный выстрел при появлении новой цели
     if lastTargetPlayer ~= closest.player then
-        local now = tick()
-        if now - lastShot < 0.2 then return end
         local tool = LP.Character:FindFirstChildOfClass("Tool")
         if tool then tool:Activate() end
         if mouse1click then pcall(mouse1click) end
-        lastShot = now
+        lastShot = tick()
         lastTargetPlayer = closest.player
     end
 end)

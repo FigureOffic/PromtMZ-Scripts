@@ -1,4 +1,4 @@
--- main.lua — GUI + HUD + Blur
+-- main.lua — PromtMZ Cozy Beige UI (fixed)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -7,6 +7,7 @@ local Lighting = game:GetService("Lighting")
 local LP = Players.LocalPlayer
 
 _G.PromtMZ = _G.PromtMZ or {}
+
 local S = _G.PromtMZ.S or {
     KillAura=false, Aimbot=false, FarAim=false, AutoShot=false,
     Reach=false, Spin=false, Magnet=false, TP=false,
@@ -14,194 +15,399 @@ local S = _G.PromtMZ.S or {
     LeaveTp=false, Fog=true, Fullbright=false, HUD=false,
     ESP=false, Skeleton=false, Box=false, ChinaHat=false, Particles=false,
     AntiAFK=false, AutoClick=false,
+
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
-    SpinV=100, MagR=30, MagS=5, AimS=0.15, FarR=500, BHopB=1.05,
+    SpinV=100, MagR=30, MagS=5, AimS=0.15,
+    FarR=500, BHopB=1.05,
     FarAimS=0.35, FarAimFastJump=0.7,
     LeaveTpDist=50, LeaveTpDelay=0.5,
-    FogColor=Color3.fromRGB(180,180,190), FogStart=0, FogEnd=250,
-    AutoShotRange=200, AutoShotDelay=0.01, AutoShotFOV=30, AutoShotPredict=1.0,
-    ParticleColor=Color3.fromRGB(255,100,200), ParticleSize=1.0, ParticleLifetime=1.5
+
+    FogColor=Color3.fromRGB(180,180,190),
+    FogStart=0, FogEnd=250,
+
+    AutoShotRange=200,
+    AutoShotDelay=0.01,
+    AutoShotFOV=30,
+    AutoShotPredict=1.0,
+
+    ParticleColor=Color3.fromRGB(255,100,200),
+    ParticleSize=1.0,
+    ParticleLifetime=1.5
 }
+
 _G.PromtMZ.S = S
 
--- Блюр фона
-local Blur = Instance.new("BlurEffect")
-Blur.Size = 0
-Blur.Name = "PromtMZ_Blur"
-Blur.Parent = Lighting
+-- COLORS
+local C = {
+    Cream       = Color3.fromRGB(250, 246, 238),
+    Cream2      = Color3.fromRGB(246, 240, 229),
+    Cream3      = Color3.fromRGB(238, 229, 214),
+    Beige       = Color3.fromRGB(224, 205, 178),
+    Beige2      = Color3.fromRGB(211, 188, 155),
+    BeigeDark   = Color3.fromRGB(178, 148, 111),
+    Warm        = Color3.fromRGB(196, 157, 112),
+    WarmDark    = Color3.fromRGB(157, 119, 82),
+    Text        = Color3.fromRGB(67, 56, 45),
+    TextSoft    = Color3.fromRGB(119, 104, 88),
+    Muted       = Color3.fromRGB(154, 139, 121),
+    White       = Color3.fromRGB(255, 252, 246),
+    Off         = Color3.fromRGB(235, 227, 216),
+    On          = Color3.fromRGB(210, 177, 137),
+    OnText      = Color3.fromRGB(65, 48, 32),
+    Shadow      = Color3.fromRGB(83, 66, 48)
+}
 
+local T = {
+    Fast = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    Soft = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Smooth = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Open = TweenInfo.new(0.42, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Close = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In),
+    Press = TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+}
+
+local function tween(obj, info, props)
+    local tw = TweenService:Create(obj, info, props)
+    tw:Play()
+    return tw
+end
+
+local function corner(obj, radius)
+    local x = Instance.new("UICorner")
+    x.CornerRadius = UDim.new(0, radius)
+    x.Parent = obj
+    return x
+end
+
+local function stroke(obj, color, transparency, thickness)
+    local s = Instance.new("UIStroke")
+    s.Color = color
+    s.Transparency = transparency or 0
+    s.Thickness = thickness or 1
+    s.Parent = obj
+    return s
+end
+
+-- BLUR (создаётся один раз)
+local Blur = Lighting:FindFirstChild("PromtMZ_Blur")
+if not Blur then
+    Blur = Instance.new("BlurEffect")
+    Blur.Name = "PromtMZ_Blur"
+    Blur.Size = 0
+    Blur.Parent = Lighting
+end
+
+-- MAIN GUI
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
 Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() Gui.Parent = game.CoreGui end)
 
+-- SHADOW
+local Shadow = Instance.new("Frame")
+Shadow.Name = "Shadow"
+Shadow.Size = UDim2.new(0, 700, 0, 450)
+Shadow.Position = UDim2.new(0.5, -342, 0.5, -217)
+Shadow.BackgroundColor3 = C.Shadow
+Shadow.BackgroundTransparency = 0.9
+Shadow.BorderSizePixel = 0
+Shadow.Visible = false
+Shadow.ZIndex = 0
+Shadow.Parent = Gui
+corner(Shadow, 20)
+
+-- MAIN
 local Main = Instance.new("Frame")
 Main.Name = "Main"
 Main.Size = UDim2.new(0, 700, 0, 450)
 Main.Position = UDim2.new(0.5, -350, 0.5, -225)
-Main.BackgroundColor3 = Color3.fromRGB(20,20,25)
-Main.BackgroundTransparency = 0.15
+Main.BackgroundColor3 = C.Cream
+Main.BackgroundTransparency = 0
 Main.BorderSizePixel = 0
 Main.Visible = false
-Main.ZIndex = 1
+Main.ZIndex = 2
 Main.Parent = Gui
-Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
+corner(Main, 18)
+stroke(Main, C.Beige, 0.35, 1)
+
+-- HEADER
+local Header = Instance.new("Frame")
+Header.Size = UDim2.new(1, 0, 0, 58)
+Header.BackgroundColor3 = C.Cream2
+Header.BorderSizePixel = 0
+Header.ZIndex = 5
+Header.Parent = Main
+corner(Header, 18)
+
+local HeaderLine = Instance.new("Frame")
+HeaderLine.Size = UDim2.new(1, -34, 0, 1)
+HeaderLine.Position = UDim2.new(0, 17, 1, -1)
+HeaderLine.BackgroundColor3 = C.Beige
+HeaderLine.BackgroundTransparency = 0.35
+HeaderLine.BorderSizePixel = 0
+HeaderLine.ZIndex = 6
+HeaderLine.Parent = Header
 
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, 0, 0, 40)
-Title.BackgroundColor3 = Color3.fromRGB(30,30,40)
-Title.BorderSizePixel = 0
-Title.Text = "  PromtMZ"
-Title.TextColor3 = Color3.fromRGB(255,255,255)
-Title.TextSize = 20
+Title.Size = UDim2.new(0, 220, 1, 0)
+Title.Position = UDim2.new(0, 19, 0, 0)
+Title.BackgroundTransparency = 1
+Title.Text = "PromtMZ"
+Title.TextColor3 = C.Text
+Title.TextSize = 21
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.ZIndex = 5
-Title.Parent = Main
-Instance.new("UICorner", Title).CornerRadius = UDim.new(0,10)
+Title.ZIndex = 7
+Title.Parent = Header
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(0, 300, 0, 18)
+Subtitle.Position = UDim2.new(0, 20, 0, 35)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "cozy control panel"
+Subtitle.TextColor3 = C.Muted
+Subtitle.TextSize = 10
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.TextXAlignment = Enum.TextXAlignment.Left
+Subtitle.ZIndex = 7
+Subtitle.Parent = Header
+
+local Dot = Instance.new("Frame")
+Dot.Size = UDim2.new(0, 7, 0, 7)
+Dot.Position = UDim2.new(1, -25, 0, 25)
+Dot.BackgroundColor3 = C.Warm
+Dot.BorderSizePixel = 0
+Dot.ZIndex = 7
+Dot.Parent = Header
+corner(Dot, 10)
+
+-- CONTENT
+local Content = Instance.new("Frame")
+Content.Size = UDim2.new(1, -28, 1, -75)
+Content.Position = UDim2.new(0, 14, 0, 68)
+Content.BackgroundTransparency = 1
+Content.ZIndex = 3
+Content.Parent = Main
 
 local function makeCol(name, x)
-    local C = Instance.new("Frame")
-    C.Size = UDim2.new(0, 160, 1, -60)
-    C.Position = UDim2.new(0, x, 0, 50)
-    C.BackgroundTransparency = 1
-    C.ZIndex = 1
-    C.Parent = Main
-    local L = Instance.new("TextLabel")
-    L.Size = UDim2.new(1, 0, 0, 25)
-    L.BackgroundTransparency = 1
-    L.Text = name
-    L.TextColor3 = Color3.fromRGB(0,200,255)
-    L.TextSize = 14
-    L.Font = Enum.Font.GothamBold
-    L.ZIndex = 5
-    L.Parent = C
+    local Card = Instance.new("Frame")
+    Card.Name = name
+    Card.Size = UDim2.new(0, 157, 1, 0)
+    Card.Position = UDim2.new(0, x, 0, 0)
+    Card.BackgroundColor3 = C.Cream2
+    Card.BorderSizePixel = 0
+    Card.ZIndex = 3
+    Card.Parent = Content
+    corner(Card, 13)
+    stroke(Card, C.Beige, 0.48, 1)
+
+    local Heading = Instance.new("TextLabel")
+    Heading.Size = UDim2.new(1, -24, 0, 28)
+    Heading.Position = UDim2.new(0, 12, 0, 7)
+    Heading.BackgroundTransparency = 1
+    Heading.Text = name
+    Heading.TextColor3 = C.WarmDark
+    Heading.TextSize = 11
+    Heading.Font = Enum.Font.GothamBold
+    Heading.TextXAlignment = Enum.TextXAlignment.Left
+    Heading.ZIndex = 5
+    Heading.Parent = Card
+
+    local Line = Instance.new("Frame")
+    Line.Size = UDim2.new(0, 25, 0, 2)
+    Line.Position = UDim2.new(0, 12, 0, 31)
+    Line.BackgroundColor3 = C.Beige2
+    Line.BorderSizePixel = 0
+    Line.ZIndex = 5
+    Line.Parent = Card
+    corner(Line, 4)
+
     local F = Instance.new("ScrollingFrame")
-    F.Size = UDim2.new(1, 0, 1, -30)
-    F.Position = UDim2.new(0, 0, 0, 28)
+    F.Size = UDim2.new(1, -16, 1, -47)
+    F.Position = UDim2.new(0, 8, 0, 42)
     F.BackgroundTransparency = 1
     F.BorderSizePixel = 0
-    F.ScrollBarThickness = 3
-    F.ZIndex = 2
-    F.CanvasSize = UDim2.new(0, 0, 0, 500)
-    F.Parent = C
-    local L2 = Instance.new("UIListLayout")
-    L2.Padding = UDim.new(0, 6)
-    L2.Parent = F
-    return F
+    F.ScrollBarThickness = 2
+    F.ScrollBarImageColor3 = C.BeigeDark
+    F.ScrollBarImageTransparency = 0.35
+    F.ZIndex = 4
+    F.CanvasSize = UDim2.new(0, 0, 0, 0)
+    F.AutomaticCanvasSize = Enum.AutomaticSize.Y
+    F.Parent = Card
+
+    local Layout = Instance.new("UIListLayout")
+    Layout.Padding = UDim.new(0, 7)
+    Layout.SortOrder = Enum.SortOrder.LayoutOrder
+    Layout.Parent = F
+
+    return F, Card
 end
 
-local ColC = makeCol("COMBAT", 10)
-local ColM = makeCol("MOVEMENT", 180)
-local ColR = makeCol("RENDER", 350)
-local ColX = makeCol("MISC", 520)
+local ColC, CardC = makeCol("COMBAT", 0)
+local ColM, CardM = makeCol("MOVEMENT", 166)
+local ColR, CardR = makeCol("RENDER", 332)
+local ColX, CardX = makeCol("MISC", 498)
 
--- Панель настроек
+-- SETTINGS PANEL
 local Panel = Instance.new("Frame")
 Panel.Name = "SettingsPanel"
-Panel.Size = UDim2.new(0, 280, 0, 400)
-Panel.Position = UDim2.new(1, 10, 0, 50)
-Panel.BackgroundColor3 = Color3.fromRGB(25,25,30)
+Panel.Size = UDim2.new(0, 270, 0, 382)
+Panel.Position = UDim2.new(1, 15, 0, 68)
+Panel.BackgroundColor3 = C.Cream
 Panel.BorderSizePixel = 0
 Panel.Visible = false
-Panel.ZIndex = 20
+Panel.ZIndex = 30
 Panel.Parent = Main
-Instance.new("UICorner", Panel).CornerRadius = UDim.new(0,8)
+corner(Panel, 16)
+stroke(Panel, C.Beige2, 0.35, 1)
+
+local PanelHeader = Instance.new("Frame")
+PanelHeader.Size = UDim2.new(1, 0, 0, 49)
+PanelHeader.BackgroundColor3 = C.Cream2
+PanelHeader.BorderSizePixel = 0
+PanelHeader.ZIndex = 31
+PanelHeader.Parent = Panel
+corner(PanelHeader, 16)
 
 local PanelTitle = Instance.new("TextLabel")
-PanelTitle.Size = UDim2.new(1, 0, 0, 30)
-PanelTitle.BackgroundColor3 = Color3.fromRGB(35,35,45)
-PanelTitle.BorderSizePixel = 0
+PanelTitle.Size = UDim2.new(1, -25, 1, 0)
+PanelTitle.Position = UDim2.new(0, 15, 0, 0)
+PanelTitle.BackgroundTransparency = 1
 PanelTitle.Text = "Settings"
-PanelTitle.TextColor3 = Color3.fromRGB(0,200,255)
+PanelTitle.TextColor3 = C.Text
 PanelTitle.TextSize = 14
 PanelTitle.Font = Enum.Font.GothamBold
-PanelTitle.Parent = Panel
-Instance.new("UICorner", PanelTitle).CornerRadius = UDim.new(0,8)
+PanelTitle.TextXAlignment = Enum.TextXAlignment.Left
+PanelTitle.ZIndex = 32
+PanelTitle.Parent = PanelHeader
+
+local PanelDot = Instance.new("Frame")
+PanelDot.Size = UDim2.new(0, 6, 0, 6)
+PanelDot.Position = UDim2.new(1, -17, 0, 22)
+PanelDot.BackgroundColor3 = C.Warm
+PanelDot.BorderSizePixel = 0
+PanelDot.ZIndex = 32
+PanelDot.Parent = PanelHeader
+corner(PanelDot, 6)
 
 local PanelScroll = Instance.new("ScrollingFrame")
-PanelScroll.Size = UDim2.new(1, -10, 1, -40)
-PanelScroll.Position = UDim2.new(0, 5, 0, 35)
+PanelScroll.Size = UDim2.new(1, -18, 1, -61)
+PanelScroll.Position = UDim2.new(0, 9, 0, 54)
 PanelScroll.BackgroundTransparency = 1
 PanelScroll.BorderSizePixel = 0
-PanelScroll.ScrollBarThickness = 3
-PanelScroll.ZIndex = 21
-PanelScroll.CanvasSize = UDim2.new(0, 0, 0, 400)
+PanelScroll.ScrollBarThickness = 2
+PanelScroll.ScrollBarImageColor3 = C.BeigeDark
+PanelScroll.ZIndex = 31
+PanelScroll.AutomaticCanvasSize = Enum.AutomaticSize.Y
+PanelScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
 PanelScroll.Parent = Panel
 
 local PanelLayout = Instance.new("UIListLayout")
-PanelLayout.Padding = UDim.new(0, 6)
+PanelLayout.Padding = UDim.new(0, 9)
 PanelLayout.Parent = PanelScroll
 
+-- SLIDER
 local function makeSlider(parent, label, minV, maxV, currentV, callback)
     local Container = Instance.new("Frame")
-    Container.Size = UDim2.new(1, 0, 0, 50)
+    Container.Size = UDim2.new(1, 0, 0, 53)
     Container.BackgroundTransparency = 1
-    Container.ZIndex = 25
+    Container.ZIndex = 35
     Container.Parent = parent
+
     local Label = Instance.new("TextLabel")
-    Label.Size = UDim2.new(1, 0, 0, 20)
+    Label.Size = UDim2.new(1, 0, 0, 19)
     Label.BackgroundTransparency = 1
     Label.Text = label .. ": " .. string.format("%.2f", currentV)
-    Label.TextColor3 = Color3.fromRGB(255,255,255)
-    Label.TextSize = 12
-    Label.Font = Enum.Font.Gotham
+    Label.TextColor3 = C.TextSoft
+    Label.TextSize = 11
+    Label.Font = Enum.Font.GothamMedium
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.ZIndex = 26
+    Label.ZIndex = 36
     Label.Parent = Container
+
     local Bg = Instance.new("Frame")
-    Bg.Size = UDim2.new(1, 0, 0, 10)
-    Bg.Position = UDim2.new(0, 0, 0, 25)
-    Bg.BackgroundColor3 = Color3.fromRGB(40,40,50)
+    Bg.Size = UDim2.new(1, 0, 0, 8)
+    Bg.Position = UDim2.new(0, 0, 0, 28)
+    Bg.BackgroundColor3 = C.Off
     Bg.BorderSizePixel = 0
-    Bg.ZIndex = 26
+    Bg.ZIndex = 36
     Bg.Parent = Container
-    Instance.new("UICorner", Bg).CornerRadius = UDim.new(0,5)
+    corner(Bg, 10)
+
     local Fill = Instance.new("Frame")
-    Fill.Size = UDim2.new((currentV - minV) / (maxV - minV), 0, 1, 0)
-    Fill.BackgroundColor3 = Color3.fromRGB(0,120,255)
+    Fill.Size = UDim2.new(math.clamp((currentV - minV) / (maxV - minV), 0, 1), 0, 1, 0)
+    Fill.BackgroundColor3 = C.Warm
     Fill.BorderSizePixel = 0
-    Fill.ZIndex = 27
+    Fill.ZIndex = 37
     Fill.Parent = Bg
-    Instance.new("UICorner", Fill).CornerRadius = UDim.new(0,5)
+    corner(Fill, 10)
+
+    local Knob = Instance.new("Frame")
+    Knob.Size = UDim2.new(0, 12, 0, 12)
+    Knob.AnchorPoint = Vector2.new(0.5, 0.5)
+    Knob.Position = UDim2.new(math.clamp((currentV - minV) / (maxV - minV), 0, 1), 0, 0.5, 0)
+    Knob.BackgroundColor3 = C.White
+    Knob.BorderSizePixel = 0
+    Knob.ZIndex = 38
+    Knob.Parent = Bg
+    corner(Knob, 20)
+    stroke(Knob, C.Beige2, 0.1, 1)
+
     local dragging = false
+
     local function update(input)
         local rel = math.clamp((input.Position.X - Bg.AbsolutePosition.X) / Bg.AbsoluteSize.X, 0, 1)
-        Fill.Size = UDim2.new(rel, 0, 1, 0)
+        tween(Fill, T.Fast, { Size = UDim2.new(rel, 0, 1, 0) })
+        tween(Knob, T.Fast, { Position = UDim2.new(rel, 0, 0.5, 0) })
         local val = minV + (maxV - minV) * rel
         Label.Text = label .. ": " .. string.format("%.2f", val)
         callback(val)
     end
+
     Bg.InputBegan:Connect(function(input)
         if input.UserInputType == Enum.UserInputType.MouseButton1 then
             dragging = true
             update(input)
         end
     end)
+
     UIS.InputChanged:Connect(function(input)
         if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
             update(input)
         end
     end)
+
     UIS.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end
+        if input.UserInputType == Enum.UserInputType.MouseButton1 then
+            dragging = false
+        end
     end)
 end
 
+-- SETTINGS OPEN
 local currentOpen = nil
+
+local function clearPanel()
+    for _, child in ipairs(PanelScroll:GetChildren()) do
+        if child:IsA("Frame") or child:IsA("TextLabel") then
+            child:Destroy()
+        end
+    end
+end
+
 local function openSettings(name, key)
     if currentOpen == name then
-        Panel.Visible = false
         currentOpen = nil
+        Panel.Visible = false
+        Panel.Position = UDim2.new(1, 15, 0, 68)
         return
     end
+
     currentOpen = name
-    Panel.Visible = true
     PanelTitle.Text = name .. " Settings"
-    for _, c in ipairs(PanelScroll:GetChildren()) do
-        if c:IsA("Frame") then c:Destroy() end
-    end
+    clearPanel()
+
     if name == "KillAura" or name == "Aimbot" then
         makeSlider(PanelScroll, "Radius", 1, 20, S.ReachV, function(v) S.ReachV = v end)
         makeSlider(PanelScroll, "Smooth", 0.01, 1, S.AimS, function(v) S.AimS = v end)
@@ -228,36 +434,87 @@ local function openSettings(name, key)
         makeSlider(PanelScroll, "Lifetime", 0.5, 5, S.ParticleLifetime, function(v) S.ParticleLifetime = v end)
     else
         local Info = Instance.new("TextLabel")
-        Info.Size = UDim2.new(1, 0, 0, 30)
+        Info.Size = UDim2.new(1, 0, 0, 40)
         Info.BackgroundTransparency = 1
-        Info.Text = "Нет настроек"
-        Info.TextColor3 = Color3.fromRGB(150,150,150)
-        Info.TextSize = 12
+        Info.Text = "Для этой функции\nнет дополнительных настроек"
+        Info.TextColor3 = C.Muted
+        Info.TextSize = 11
         Info.Font = Enum.Font.Gotham
-        Info.ZIndex = 25
+        Info.TextWrapped = true
+        Info.ZIndex = 35
         Info.Parent = PanelScroll
     end
+
+    Panel.Visible = true
+    Panel.Position = UDim2.new(1, 15, 0, 68)
+    tween(Panel, T.Open, { Position = UDim2.new(1, -250, 0, 68) })
 end
 
+-- BUTTONS
 local function makeBtn(parent, name, key)
     local B = Instance.new("TextButton")
-    B.Size = UDim2.new(1, 0, 0, 30)
-    B.BackgroundColor3 = (S[key] == true) and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+    B.Name = key
+    B.Size = UDim2.new(1, 0, 0, 34)
+    B.BackgroundColor3 = S[key] == true and C.On or C.Off
     B.BorderSizePixel = 0
-    B.Text = "  " .. name
-    B.TextColor3 = Color3.fromRGB(255,255,255)
-    B.TextSize = 12
-    B.Font = Enum.Font.Gotham
-    B.TextXAlignment = Enum.TextXAlignment.Left
-    B.ZIndex = 10
-    B.Active = true
+    B.Text = ""
     B.AutoButtonColor = false
+    B.Active = true
+    B.ZIndex = 10
     B.Parent = parent
-    Instance.new("UICorner", B).CornerRadius = UDim.new(0,5)
+
+    corner(B, 9)
+    local Border = stroke(B, C.Beige, 0.5, 1)
+
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, -35, 1, 0)
+    Label.Position = UDim2.new(0, 12, 0, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = name
+    Label.TextColor3 = S[key] == true and C.OnText or C.Text
+    Label.TextSize = 11
+    Label.Font = Enum.Font.GothamMedium
+    Label.TextXAlignment = Enum.TextXAlignment.Left
+    Label.ZIndex = 11
+    Label.Parent = B
+
+    local Indicator = Instance.new("Frame")
+    Indicator.Size = UDim2.new(0, 6, 0, 6)
+    Indicator.Position = UDim2.new(1, -15, 0.5, -3)
+    Indicator.BackgroundColor3 = S[key] == true and C.WarmDark or C.BeigeDark
+    Indicator.BackgroundTransparency = S[key] == true and 0 or 0.65
+    Indicator.BorderSizePixel = 0
+    Indicator.ZIndex = 12
+    Indicator.Parent = B
+    corner(Indicator, 8)
+
+    local baseSize = B.Size
+
+    B.MouseEnter:Connect(function()
+        tween(B, T.Soft, { BackgroundColor3 = S[key] and C.On:Lerp(C.White, 0.15) or C.Off:Lerp(C.White, 0.3) })
+        tween(B, T.Soft, { Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset, baseSize.Y.Scale, baseSize.Y.Offset - 1) })
+        tween(Border, T.Soft, { Transparency = 0.15 })
+    end)
+
+    B.MouseLeave:Connect(function()
+        tween(B, T.Soft, { BackgroundColor3 = S[key] and C.On or C.Off, Size = baseSize })
+        tween(Border, T.Soft, { Transparency = 0.5 })
+    end)
+
+    B.MouseButton1Down:Connect(function()
+        tween(B, T.Press, { Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset - 4, baseSize.Y.Scale, baseSize.Y.Offset - 3) })
+    end)
+
+    B.MouseButton1Up:Connect(function()
+        tween(B, T.Press, { Size = baseSize })
+    end)
 
     B.MouseButton1Click:Connect(function()
         S[key] = not S[key]
-        B.BackgroundColor3 = (S[key] == true) and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+        local active = S[key] == true
+        tween(B, T.Soft, { BackgroundColor3 = active and C.On or C.Off })
+        tween(Label, T.Soft, { TextColor3 = active and C.OnText or C.Text })
+        tween(Indicator, T.Soft, { BackgroundColor3 = active and C.WarmDark or C.BeigeDark, BackgroundTransparency = active and 0 or 0.65 })
         print("[PromtMZ]", name, "=", tostring(S[key]))
     end)
 
@@ -266,6 +523,7 @@ local function makeBtn(parent, name, key)
     end)
 end
 
+-- BUTTONS
 makeBtn(ColC, "KillAura", "KillAura")
 makeBtn(ColC, "Aimbot", "Aimbot")
 makeBtn(ColC, "Far Aimbot", "FarAim")
@@ -294,53 +552,86 @@ makeBtn(ColR, "Particles", "Particles")
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
 
+-- OPEN / CLOSE
 local opened = false
+
 local function open()
     if opened then return end
     opened = true
+
     Main.Visible = true
-    Main.Size = UDim2.new(0, 0, 0, 0)
-    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-    TweenService:Create(Main, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
-        Size = UDim2.new(0, 700, 0, 450),
-        Position = UDim2.new(0.5, -350, 0.5, -225)
-    }):Play()
-    TweenService:Create(Blur, TweenInfo.new(0.3), { Size = 24 }):Play()
+    Shadow.Visible = true
+
+    Main.Size = UDim2.new(0, 20, 0, 20)
+    Main.Position = UDim2.new(0.5, -10, 0.5, -10)
+    Shadow.Size = UDim2.new(0, 20, 0, 20)
+    Shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+
+    tween(Main, T.Open, { Size = UDim2.new(0, 700, 0, 450), Position = UDim2.new(0.5, -350, 0.5, -225) })
+    tween(Shadow, T.Open, { Size = UDim2.new(0, 710, 0, 460), Position = UDim2.new(0.5, -347, 0.5, -220), BackgroundTransparency = 0.94 })
+    tween(Blur, T.Smooth, { Size = 18 })
+
+    local cards = {CardC, CardM, CardR, CardX}
+    for i, card in ipairs(cards) do
+        local target = card.Position
+        card.Position = UDim2.new(target.X.Scale, target.X.Offset, 0, target.Y.Offset + 18)
+        card.BackgroundTransparency = 1
+        task.delay(0.08 + (i * 0.055), function()
+            if not opened then return end
+            tween(card, T.Open, { Position = target, BackgroundTransparency = 0 })
+        end)
+    end
 end
 
 local function close()
     if not opened then return end
     opened = false
-    Panel.Visible = false
     currentOpen = nil
-    local t = TweenService:Create(Main, TweenInfo.new(0.2), {
-        Size = UDim2.new(0, 0, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0)
-    })
-    t:Play()
-    t.Completed:Connect(function() Main.Visible = false end)
-    TweenService:Create(Blur, TweenInfo.new(0.3), { Size = 0 }):Play()
+    Panel.Visible = false
+
+    tween(Main, T.Close, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, -10, 0.5, -10) })
+    tween(Shadow, T.Close, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = 1 })
+    tween(Blur, T.Smooth, { Size = 0 })
+
+    task.delay(0.28, function()
+        if not opened then
+            Main.Visible = false
+            Shadow.Visible = false
+        end
+    end)
 end
 
-local drag, ds, sp
-Title.InputBegan:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = true; ds = i.Position; sp = Main.Position
+-- DRAG
+local drag = false
+local dragStart
+local startPos
+
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = true
+        dragStart = input.Position
+        startPos = Main.Position
     end
-end)
-UIS.InputChanged:Connect(function(i)
-    if drag and i.UserInputType == Enum.UserInputType.MouseMovement then
-        local d = i.Position - ds
-        Main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + d.X, sp.Y.Scale, sp.Y.Offset + d.Y)
-    end
-end)
-UIS.InputEnded:Connect(function(i)
-    if i.UserInputType == Enum.UserInputType.MouseButton1 then drag = false end
 end)
 
-UIS.InputBegan:Connect(function(i, g)
-    if g then return end
-    if i.KeyCode == Enum.KeyCode.RightShift or i.KeyCode == Enum.KeyCode.Two then
+UIS.InputChanged:Connect(function(input)
+    if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        Shadow.Position = UDim2.new(Main.Position.X.Scale, Main.Position.X.Offset + 8, Main.Position.Y.Scale, Main.Position.Y.Offset + 8)
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        drag = false
+    end
+end)
+
+-- HOTKEYS
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightShift or input.KeyCode == Enum.KeyCode.Two then
         if opened then close() else open() end
     end
 end)
@@ -352,30 +643,33 @@ HudGui.ResetOnSpawn = false
 pcall(function() HudGui.Parent = game.CoreGui end)
 
 local Watermark = Instance.new("TextLabel")
-Watermark.Size = UDim2.new(0, 280, 0, 30)
-Watermark.Position = UDim2.new(0, 10, 0, 10)
-Watermark.BackgroundColor3 = Color3.fromRGB(20,20,25)
-Watermark.BackgroundTransparency = 0.3
+Watermark.Size = UDim2.new(0, 250, 0, 36)
+Watermark.Position = UDim2.new(0, 14, 0, 14)
+Watermark.BackgroundColor3 = C.Cream
+Watermark.BackgroundTransparency = 0.08
 Watermark.BorderSizePixel = 0
-Watermark.TextColor3 = Color3.fromRGB(0,200,255)
-Watermark.TextSize = 14
+Watermark.TextColor3 = C.Text
+Watermark.TextSize = 12
 Watermark.Font = Enum.Font.GothamBold
 Watermark.TextXAlignment = Enum.TextXAlignment.Left
 Watermark.Visible = false
 Watermark.Parent = HudGui
-Instance.new("UICorner", Watermark).CornerRadius = UDim.new(0,6)
+corner(Watermark, 10)
+stroke(Watermark, C.Beige, 0.35, 1)
 
 local ActiveFrame = Instance.new("Frame")
-ActiveFrame.Size = UDim2.new(0, 200, 0, 300)
-ActiveFrame.Position = UDim2.new(1, -210, 0, 10)
-ActiveFrame.BackgroundColor3 = Color3.fromRGB(20,20,25)
-ActiveFrame.BackgroundTransparency = 0.3
+ActiveFrame.Size = UDim2.new(0, 205, 0, 300)
+ActiveFrame.Position = UDim2.new(1, -220, 0, 14)
+ActiveFrame.BackgroundColor3 = C.Cream
+ActiveFrame.BackgroundTransparency = 0.08
 ActiveFrame.BorderSizePixel = 0
 ActiveFrame.Visible = false
 ActiveFrame.Parent = HudGui
-Instance.new("UICorner", ActiveFrame).CornerRadius = UDim.new(0,6)
+corner(ActiveFrame, 12)
+stroke(ActiveFrame, C.Beige, 0.35, 1)
 
 local hudLabels = {}
+
 RunService.RenderStepped:Connect(function()
     Watermark.Visible = S.HUD
     ActiveFrame.Visible = S.HUD
@@ -384,23 +678,26 @@ RunService.RenderStepped:Connect(function()
         hudLabels = {}
         return
     end
-    Watermark.Text = "  PromtMZ | " .. LP.Name
+    Watermark.Text = "  PromtMZ  •  " .. LP.Name
     for _, l in ipairs(hudLabels) do l:Destroy() end
     hudLabels = {}
+    local y = 10
     for k, v in pairs(S) do
         if v == true and type(k) == "string" and k ~= "HUD" and k ~= "Fog" and k ~= "Fullbright" then
             local L = Instance.new("TextLabel")
-            L.Size = UDim2.new(1, -10, 0, 18)
+            L.Size = UDim2.new(1, -20, 0, 19)
+            L.Position = UDim2.new(0, 10, 0, y)
             L.BackgroundTransparency = 1
-            L.Text = "• " .. k
-            L.TextColor3 = Color3.fromRGB(200,200,200)
-            L.TextSize = 12
+            L.Text = "•  " .. k
+            L.TextColor3 = C.TextSoft
+            L.TextSize = 11
             L.Font = Enum.Font.Gotham
             L.TextXAlignment = Enum.TextXAlignment.Left
             L.Parent = ActiveFrame
             table.insert(hudLabels, L)
+            y += 20
         end
     end
 end)
 
-print("[PromtMZ] main загружен")
+print("[PromtMZ] Cozy Beige UI загружен")

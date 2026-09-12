@@ -1,4 +1,4 @@
--- PromtMZ Visuals (использует настройки из _G.PromtMZ.S)
+-- visuals.lua
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LP = Players.LocalPlayer
@@ -11,8 +11,60 @@ if not S then
 end
 
 local ok = pcall(function() return Drawing.new("Text") end)
+
+-- Партиклы для игроков
+local particleAttachments = {}
+local function createParticles(p)
+    if not p.Character then return end
+    local hrp = p.Character:FindFirstChild("HumanoidRootPart") or p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+    if not hrp then return end
+    if particleAttachments[p] and particleAttachments[p].Parent then return end
+
+    local att = Instance.new("Attachment")
+    att.Name = "PromtMZ_Particles"
+    att.Parent = hrp
+
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Name = "PromtMZ_Emitter"
+    emitter.Texture = "rbxassetid://243660364"  -- стандартная искра
+    emitter.Color = ColorSequence.new(S.ParticleColor)
+    emitter.Size = NumberSequence.new(S.ParticleSize)
+    emitter.Lifetime = NumberRange.new(S.ParticleLifetime)
+    emitter.Rate = 20
+    emitter.Speed = NumberRange.new(2, 4)
+    emitter.SpreadAngle = Vector2.new(45, 45)
+    emitter.Parent = att
+
+    particleAttachments[p] = att
+end
+
+RunService.RenderStepped:Connect(function()
+    for p, att in pairs(particleAttachments) do
+        if att and att.Parent then
+            local emitter = att:FindFirstChild("PromtMZ_Emitter")
+            if emitter then
+                emitter.Enabled = S.Particles and true or false
+                emitter.Color = ColorSequence.new(S.ParticleColor)
+                emitter.Size = NumberSequence.new(S.ParticleSize)
+                emitter.Lifetime = NumberRange.new(S.ParticleLifetime)
+            end
+        end
+    end
+end)
+
+-- Если Drawing не поддерживается, всё равно оставляем партиклы работать
 if not ok then
-    warn("[PromtMZ] Drawing не поддерживается экзекьютором")
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP then
+            p.CharacterAdded:Connect(function() task.wait(0.5) createParticles(p) end)
+            if p.Character then createParticles(p) end
+        end
+    end
+    Players.PlayerAdded:Connect(function(p)
+        if p ~= LP then
+            p.CharacterAdded:Connect(function() task.wait(0.5) createParticles(p) end)
+        end
+    end)
     return
 end
 
@@ -24,16 +76,12 @@ local function espFor(p)
     e.Size = 16
     e.Center = true
     e.Outline = true
-    e.Font = 2
     RunService.RenderStepped:Connect(function()
         if not S.ESP then e.Visible = false return end
         local char = p.Character
         local hum = char and char:FindFirstChild("Humanoid")
         local head = char and char:FindFirstChild("Head")
-        if not char or not hum or not head or hum.Health <= 0 then
-            e.Visible = false
-            return
-        end
+        if not char or not hum or not head or hum.Health <= 0 then e.Visible = false return end
         local pos, on = Cam:WorldToViewportPoint(head.Position)
         if on then
             e.Position = Vector2.new(pos.X, pos.Y - 25)
@@ -117,16 +165,10 @@ local function boxFor(p)
         if not S.Box then b.Visible = false return end
         local char = p.Character
         local hum = char and char:FindFirstChild("Humanoid")
-        if not char or not hum or hum.Health <= 0 then
-            b.Visible = false
-            return
-        end
+        if not char or not hum or hum.Health <= 0 then b.Visible = false return end
         local hrp = char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Torso") or char:FindFirstChild("UpperTorso")
         local head = char:FindFirstChild("Head")
-        if not hrp or not head then
-            b.Visible = false
-            return
-        end
+        if not hrp or not head then b.Visible = false return end
         local pos, on = Cam:WorldToViewportPoint(hrp.Position)
         local hpos, hon = Cam:WorldToViewportPoint(head.Position)
         if on and hon then
@@ -146,12 +188,15 @@ end
 for _, p in ipairs(Players:GetPlayers()) do
     if p ~= LP then
         espFor(p); skelFor(p); boxFor(p)
+        p.CharacterAdded:Connect(function() task.wait(0.5) createParticles(p) end)
+        if p.Character then createParticles(p) end
     end
 end
 Players.PlayerAdded:Connect(function(p)
     if p ~= LP then
         espFor(p); skelFor(p); boxFor(p)
+        p.CharacterAdded:Connect(function() task.wait(0.5) createParticles(p) end)
     end
 end)
 
-print("[PromtMZ] Visuals загружены")
+print("[PromtMZ] visuals загружены")

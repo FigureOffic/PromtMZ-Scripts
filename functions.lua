@@ -102,6 +102,22 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- LeaveTp
+local lastTpTime = 0
+RunService.RenderStepped:Connect(function()
+    if not S.LeaveTp or not LP.Character then return end
+    local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    local now = tick()
+    if now - lastTpTime > S.LeaveTpDelay then
+        lastTpTime = now
+        local vel = hrp.Velocity
+        if vel.Magnitude > 1 then
+            hrp.CFrame = CFrame.new(hrp.Position + vel.Unit * S.LeaveTpDist) * (hrp.CFrame - hrp.Position)
+        end
+    end
+end)
+
 -- KillAura
 RunService.RenderStepped:Connect(function()
     if not S.KillAura or not LP.Character then return end
@@ -120,19 +136,39 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot
+-- Aimbot (сначала без стены, потом остальные)
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
     local targets = getTargets()
-    local closest, shortest = nil, S.ReachV
-    for _, t in ipairs(targets) do
-        local d = (myHead.Position - t.head.Position).Magnitude
-        if d < shortest then shortest = d; closest = t end
+    
+    local function findTarget(checkWalls)
+        local closest, shortest = nil, S.ReachV
+        for _, t in ipairs(targets) do
+            local d = (myHead.Position - t.head.Position).Magnitude
+            if d < shortest then
+                if checkWalls then
+                    local rp = RaycastParams.new()
+                    rp.FilterType = Enum.RaycastFilterType.Exclude
+                    rp.FilterDescendantsInstances = {LP.Character}
+                    local rr = workspace:Raycast(myHead.Position, t.head.Position - myHead.Position, rp)
+                    local vis = false
+                    if rr then
+                        if rr.Instance and rr.Instance:IsDescendantOf(t.char) then vis = true end
+                    else vis = true end
+                    if not vis then continue end
+                end
+                shortest = d
+                closest = t
+            end
+        end
+        return closest
     end
-    if closest then
-        local newCFrame = CFrame.lookAt(myHead.Position, closest.head.Position)
+    
+    local target = findTarget(true) or findTarget(false)
+    if target then
+        local newCFrame = CFrame.lookAt(myHead.Position, target.head.Position)
         Cam.CFrame = Cam.CFrame:Lerp(newCFrame, S.AimS)
     end
 end)
@@ -154,25 +190,69 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- AutoShot
+-- AutoShot (стреляет один раз при появлении цели)
 local lastShot = 0
+local lastVisibleTarget = nil
+
 RunService.RenderStepped:Connect(function()
-    if not S.AutoShot or not LP.Character then return end
-    local now = tick()
-    if now - lastShot < S.AutoShotDelay then return end
+    if not S.AutoShot or not LP.Character then 
+        lastVisibleTarget = nil
+        return 
+    end
+    
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
+    
+    -- Ищем ближайшую цель
     local targets = getTargets()
     local closest, shortest = nil, S.AutoShotRange
     for _, t in ipairs(targets) do
         local d = (myHead.Position - t.head.Position).Magnitude
         if d < shortest then shortest = d; closest = t end
     end
-    if closest then
+    
+    if not closest then
+        lastVisibleTarget = nil
+        return
+    end
+    
+    -- Проверка стены (видна ли цель)
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = {LP.Character}
+    local rr = workspace:Raycast(myHead.Position, closest.head.Position - myHead.Position, rp)
+    local visible = false
+    if rr then
+        if rr.Instance and rr.Instance:IsDescendantOf(closest.char) then visible = true end
+    else
+        visible = true
+    end
+    
+    if not visible then
+        lastVisibleTarget = nil
+        return
+    end
+    
+    -- Проверка прицела
+    local sp, onScr = Cam:WorldToViewportPoint(closest.head.Position)
+    if not onScr then
+        lastVisibleTarget = nil
+        return
+    end
+    local vp = Cam.ViewportSize
+    local cx, cy = vp.X / 2, vp.Y / 2
+    local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
+    if dC > S.AutoShotFOV then return end
+    
+    -- Стреляем ТОЛЬКО если цель новая
+    if lastVisibleTarget ~= closest.player then
+        local now = tick()
+        if now - lastShot < S.AutoShotDelay then return end
         local tool = LP.Character:FindFirstChildOfClass("Tool")
         if tool then tool:Activate() end
         if mouse1click then pcall(mouse1click) end
         lastShot = now
+        lastVisibleTarget = closest.player
     end
 end)
 
@@ -208,7 +288,10 @@ RunService.RenderStepped:Connect(function()
         local d = (hrp.Position - t.head.Position).Magnitude
         if d < s then s = d; c = t end
     end
-    if c then hrp.CFrame = c.char:FindFirstChild("HumanoidRootPart").CFrame + Vector3.new(0,3,0) end
+    if c then
+        local tHrp = c.char:FindFirstChild("HumanoidRootPart")
+        if tHrp then hrp.CFrame = tHrp.CFrame + Vector3.new(0,3,0) end
+    end
 end)
 
 -- AntiAFK

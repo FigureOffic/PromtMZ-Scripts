@@ -13,19 +13,19 @@ if not S then
     return
 end
 
-local ok = pcall(function() return Drawing.new("Text") end)
-
--- ================= JUMP CIRCLES + CLICK BURST =================
+-- ================= JUMP CIRCLES + LARGE CLICK PARTICLES =================
 local CONFIG = {
     JumpCircles = true,
     CircleCount = 4,
     CircleSize = 3,
     CircleColor = Color3.fromRGB(224, 205, 178),
+
     ClickParticles = true,
-    ParticleCount = 18,
+    ParticleCount = 28,
     ParticleColor = Color3.fromRGB(224, 205, 178),
-    ParticleSpeed = 22,
-    ParticleLifetime = 0.55,
+    ParticleSpeed = 28,
+    ParticleLifetime = 0.7,
+    ParticleSize = 0.32,
 }
 
 local function createJumpCircle(character)
@@ -54,7 +54,7 @@ local function createJumpCircle(character)
             Transparency = 1
         })
         tween:Play()
-        Debris:AddItem(circle, 0.7)
+        Debris:AddItem(circle, 0.8)
     end
 end
 
@@ -87,31 +87,34 @@ local function createClickBurst(position)
     attachment.Parent = holder
 
     local emitter = Instance.new("ParticleEmitter")
+    emitter.Name = "LargeClickParticles"
     emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
     emitter.Color = ColorSequence.new(S.ParticleColor or CONFIG.ParticleColor)
-    emitter.LightEmission = 0.7
+    emitter.LightEmission = 0.9
     emitter.LightInfluence = 0
     emitter.Lifetime = NumberRange.new(CONFIG.ParticleLifetime * 0.7, CONFIG.ParticleLifetime)
     emitter.Speed = NumberRange.new(CONFIG.ParticleSpeed * 0.7, CONFIG.ParticleSpeed)
     emitter.SpreadAngle = Vector2.new(180, 180)
-    emitter.Rate = 0
     emitter.EmissionDirection = Enum.NormalId.Front
+    emitter.Rate = 0
     emitter.Size = NumberSequence.new({
-        NumberSequenceKeypoint.new(0, 0.16),
-        NumberSequenceKeypoint.new(0.35, 0.09),
+        NumberSequenceKeypoint.new(0, CONFIG.ParticleSize),
+        NumberSequenceKeypoint.new(0.25, CONFIG.ParticleSize * 0.8),
+        NumberSequenceKeypoint.new(0.65, CONFIG.ParticleSize * 0.45),
         NumberSequenceKeypoint.new(1, 0)
     })
     emitter.Transparency = NumberSequence.new({
         NumberSequenceKeypoint.new(0, 0),
-        NumberSequenceKeypoint.new(0.7, 0.25),
+        NumberSequenceKeypoint.new(0.55, 0.15),
+        NumberSequenceKeypoint.new(0.8, 0.55),
         NumberSequenceKeypoint.new(1, 1)
     })
     emitter.Rotation = NumberRange.new(0, 360)
-    emitter.RotSpeed = NumberRange.new(-220, 220)
-    emitter.Drag = 3
+    emitter.RotSpeed = NumberRange.new(-300, 300)
+    emitter.Drag = 2
     emitter.Parent = attachment
     emitter:Emit(CONFIG.ParticleCount)
-    Debris:AddItem(holder, CONFIG.ParticleLifetime + 0.3)
+    Debris:AddItem(holder, CONFIG.ParticleLifetime + 0.5)
 end
 
 local mouse = LP:GetMouse()
@@ -128,7 +131,77 @@ mouse.Button1Down:Connect(function()
     end
 end)
 
+-- ================= CHAMS (Glossy Highlight, видно сквозь стены) =================
+local ChamsConfig = {
+    FillColor = Color3.fromRGB(235, 220, 195),
+    OutlineColor = Color3.fromRGB(255, 248, 230),
+    FillTransparency = 0.18,
+    OutlineTransparency = 0,
+    UseShine = true,
+}
+
+local function addGlossyHighlight(character)
+    if not character then return end
+    if not S.Chams then
+        local old = character:FindFirstChild("GlossyHighlight")
+        if old then old:Destroy() end
+        return
+    end
+
+    local old = character:FindFirstChild("GlossyHighlight")
+    if old then old:Destroy() end
+
+    local highlight = Instance.new("Highlight")
+    highlight.Name = "GlossyHighlight"
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop  -- ← видно сквозь стены
+    highlight.FillColor = ChamsConfig.FillColor
+    highlight.FillTransparency = ChamsConfig.FillTransparency
+    highlight.OutlineColor = ChamsConfig.OutlineColor
+    highlight.OutlineTransparency = ChamsConfig.OutlineTransparency
+    highlight.Enabled = true
+    highlight.Parent = character
+
+    if ChamsConfig.UseShine then
+        highlight:SetAttribute("Glossy", true)
+    end
+end
+
+-- Обновление Chams при переключении
+RunService.RenderStepped:Connect(function()
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local hl = p.Character:FindFirstChild("GlossyHighlight")
+            if S.Chams and not hl then
+                addGlossyHighlight(p.Character)
+            elseif not S.Chams and hl then
+                hl:Destroy()
+            end
+        end
+    end
+end)
+
+local function setupPlayer(player)
+    if player.Character then
+        task.defer(function()
+            addGlossyHighlight(player.Character)
+        end)
+    end
+    player.CharacterAdded:Connect(function(character)
+        character:WaitForChild("Humanoid", 5)
+        task.wait(0.1)
+        addGlossyHighlight(character)
+    end)
+end
+
+for _, player in ipairs(Players:GetPlayers()) do
+    if player ~= LP then setupPlayer(player) end
+end
+Players.PlayerAdded:Connect(function(player)
+    if player ~= LP then setupPlayer(player) end
+end)
+
 -- ================= ESP / SKELETON / BOX =================
+local ok = pcall(function() return Drawing.new("Text") end)
 if not ok then return end
 
 local function getChar(p)
@@ -278,4 +351,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены")
+print("[PromtMZ] visuals загружены (particles + chams)")

@@ -1,8 +1,9 @@
--- main.lua
+-- main.lua — GUI + HUD + Blur
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
+local Lighting = game:GetService("Lighting")
 local LP = Players.LocalPlayer
 
 _G.PromtMZ = _G.PromtMZ or {}
@@ -23,6 +24,12 @@ local S = _G.PromtMZ.S or {
 }
 _G.PromtMZ.S = S
 
+-- Блюр фона
+local Blur = Instance.new("BlurEffect")
+Blur.Size = 0
+Blur.Name = "PromtMZ_Blur"
+Blur.Parent = Lighting
+
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
@@ -34,6 +41,7 @@ Main.Name = "Main"
 Main.Size = UDim2.new(0, 700, 0, 450)
 Main.Position = UDim2.new(0.5, -350, 0.5, -225)
 Main.BackgroundColor3 = Color3.fromRGB(20,20,25)
+Main.BackgroundTransparency = 0.15
 Main.BorderSizePixel = 0
 Main.Visible = false
 Main.ZIndex = 1
@@ -297,6 +305,7 @@ local function open()
         Size = UDim2.new(0, 700, 0, 450),
         Position = UDim2.new(0.5, -350, 0.5, -225)
     }):Play()
+    TweenService:Create(Blur, TweenInfo.new(0.3), { Size = 24 }):Play()
 end
 
 local function close()
@@ -310,6 +319,7 @@ local function close()
     })
     t:Play()
     t.Completed:Connect(function() Main.Visible = false end)
+    TweenService:Create(Blur, TweenInfo.new(0.3), { Size = 0 }):Play()
 end
 
 local drag, ds, sp

@@ -136,9 +136,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ==================================================
--- AIMBOT — быстрый с плавностью 0.15
--- ==================================================
+-- Aimbot (быстрый, 0.15 плавность)
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
@@ -193,73 +191,36 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==================================================
--- AUTOSHOT — супер быстрый, но не по кд
+-- AUTOSHOT — СТАРЫЙ, ПРОСТОЙ, БЫСТРЫЙ
 -- ==================================================
 local lastShot = 0
-local lastTargetPlayer = nil
-local lastSeenTime = 0
-
 RunService.RenderStepped:Connect(function()
-    if not S.AutoShot or not LP.Character then 
-        lastTargetPlayer = nil
-        return 
-    end
-    
+    if not S.AutoShot or not LP.Character then return end
+    local now = tick()
+    if now - lastShot < S.AutoShotDelay then return end
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
-    
+
     local targets = getTargets()
-    if #targets == 0 then
-        lastTargetPlayer = nil
-        return
-    end
-    
-    -- Ближайшая ВИДИМАЯ цель
     local closest, shortest = nil, S.AutoShotRange
     for _, t in ipairs(targets) do
         local d = (myHead.Position - t.head.Position).Magnitude
-        if d < shortest then
-            local rp = RaycastParams.new()
-            rp.FilterType = Enum.RaycastFilterType.Exclude
-            rp.FilterDescendantsInstances = {LP.Character}
-            local rr = workspace:Raycast(myHead.Position, t.head.Position - myHead.Position, rp)
-            local visible = false
-            if rr then
-                if rr.Instance and rr.Instance:IsDescendantOf(t.char) then visible = true end
-            else
-                visible = true
-            end
-            if visible then
-                shortest = d
-                closest = t
+        if d < shortest then shortest = d; closest = t end
+    end
+
+    if closest then
+        local sp, onScr = Cam:WorldToViewportPoint(closest.head.Position)
+        if onScr then
+            local vp = Cam.ViewportSize
+            local cx, cy = vp.X / 2, vp.Y / 2
+            local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
+            if dC <= S.AutoShotFOV then
+                local tool = LP.Character:FindFirstChildOfClass("Tool")
+                if tool then tool:Activate() end
+                if mouse1click then pcall(mouse1click) end
+                lastShot = now
             end
         end
-    end
-    
-    if not closest then
-        if tick() - lastSeenTime > 0.5 then
-            lastTargetPlayer = nil
-        end
-        return
-    end
-    
-    lastSeenTime = tick()
-    
-    -- Проверка прицела
-    local sp, onScr = Cam:WorldToViewportPoint(closest.head.Position)
-    if not onScr then return end
-    local vp = Cam.ViewportSize
-    local cx, cy = vp.X / 2, vp.Y / 2
-    local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
-    if dC > S.AutoShotFOV then return end
-    
-    -- Мгновенный выстрел при появлении новой цели
-    if lastTargetPlayer ~= closest.player then
-        local tool = LP.Character:FindFirstChildOfClass("Tool")
-        if tool then tool:Activate() end
-        if mouse1click then pcall(mouse1click) end
-        lastShot = tick()
-        lastTargetPlayer = closest.player
     end
 end)
 

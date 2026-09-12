@@ -8,9 +8,10 @@ _G.PromtMZ = _G.PromtMZ or {}
 _G.PromtMZ.loaded = true
 
 local base = "https://raw.githubusercontent.com/FigureOffic/PromtMZ-Scripts/main/"
+local salt = "?t=" .. tostring(tick())
 
-loadstring(game:HttpGet(base .. "main.lua"))()
+loadstring(game:HttpGet(base .. "main.lua" .. salt))()
 task.wait(1)
-loadstring(game:HttpGet(base .. "functions.lua"))()
+loadstring(game:HttpGet(base .. "functions.lua" .. salt))()
 task.wait(0.5)
-loadstring(game:HttpGet(base .. "visuals.lua"))()
+loadstring(game:HttpGet(base .. "visuals.lua" .. salt))()

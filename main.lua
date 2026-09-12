@@ -1,4 +1,4 @@
--- main.lua — GUI + HUD
+-- main.lua — GUI + HUD (fixed buttons)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -25,6 +25,7 @@ _G.PromtMZ.S = S
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
+Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.Parent = game.CoreGui
 
 local Main = Instance.new("Frame")
@@ -33,6 +34,7 @@ Main.Position = UDim2.new(0.5, -350, 0.5, -225)
 Main.BackgroundColor3 = Color3.fromRGB(20,20,25)
 Main.BorderSizePixel = 0
 Main.Visible = false
+Main.ZIndex = 1
 Main.Parent = Gui
 Instance.new("UICorner", Main).CornerRadius = UDim.new(0,10)
 
@@ -45,6 +47,7 @@ Title.TextColor3 = Color3.fromRGB(255,255,255)
 Title.TextSize = 20
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.ZIndex = 5
 Title.Parent = Main
 Instance.new("UICorner", Title).CornerRadius = UDim.new(0,10)
 
@@ -53,7 +56,9 @@ local function makeCol(name, x)
     C.Size = UDim2.new(0, 160, 1, -60)
     C.Position = UDim2.new(0, x, 0, 50)
     C.BackgroundTransparency = 1
+    C.ZIndex = 1
     C.Parent = Main
+
     local L = Instance.new("TextLabel")
     L.Size = UDim2.new(1, 0, 0, 25)
     L.BackgroundTransparency = 1
@@ -61,17 +66,24 @@ local function makeCol(name, x)
     L.TextColor3 = Color3.fromRGB(0,200,255)
     L.TextSize = 14
     L.Font = Enum.Font.GothamBold
+    L.ZIndex = 5
     L.Parent = C
+
     local F = Instance.new("ScrollingFrame")
     F.Size = UDim2.new(1, 0, 1, -30)
     F.Position = UDim2.new(0, 0, 0, 28)
     F.BackgroundTransparency = 1
     F.BorderSizePixel = 0
     F.ScrollBarThickness = 3
+    F.ZIndex = 2
+    F.CanvasSize = UDim2.new(0, 0, 0, 500)
     F.Parent = C
+
     local L2 = Instance.new("UIListLayout")
     L2.Padding = UDim.new(0, 6)
+    L2.SortOrder = Enum.SortOrder.LayoutOrder
     L2.Parent = F
+
     return F
 end
 
@@ -90,11 +102,16 @@ local function makeBtn(parent, name, key)
     B.TextSize = 12
     B.Font = Enum.Font.Gotham
     B.TextXAlignment = Enum.TextXAlignment.Left
+    B.ZIndex = 10
+    B.Active = true
+    B.AutoButtonColor = false
     B.Parent = parent
     Instance.new("UICorner", B).CornerRadius = UDim.new(0,5)
+
     B.MouseButton1Click:Connect(function()
         S[key] = not S[key]
         B.BackgroundColor3 = S[key] and Color3.fromRGB(0,120,255) or Color3.fromRGB(40,40,50)
+        print("[PromtMZ]", name, "=", S[key])
     end)
 end
 

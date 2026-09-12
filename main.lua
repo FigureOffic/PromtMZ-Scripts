@@ -1,4 +1,4 @@
--- PromtMZ — full version (GUI + HUD + fixed Visuals + fast Aimbot)
+-- PromtMZ — full version (GUI + HUD + Visuals + fast Aimbot)
 -- Open: RightShift or 2
 -- LMB - toggle, RMB - settings
 
@@ -72,22 +72,17 @@ ActiveTitle.TextXAlignment = Enum.TextXAlignment.Left
 ActiveTitle.Parent = ActiveFrame
 
 local hudLabels = {}
-
 RunService.RenderStepped:Connect(function()
     Watermark.Visible = S.HUD
     ActiveFrame.Visible = S.HUD
-
     if not S.HUD then
         for _, l in ipairs(hudLabels) do l:Destroy() end
         hudLabels = {}
         return
     end
-
     Watermark.Text = "  PromtMZ | " .. LP.Name
-
     for _, l in ipairs(hudLabels) do l:Destroy() end
     hudLabels = {}
-
     local exclude = {
         HUD=true, Fog=true, Fullbright=true, ReachV=true, SpeedV=true, FlyV=true, JumpV=true,
         SpinV=true, MagR=true, MagS=true, AimS=true, FarR=true, BHopB=true,
@@ -95,13 +90,11 @@ RunService.RenderStepped:Connect(function()
         FogColor=true, FogStart=true, FogEnd=true,
         AutoShotRange=true, AutoShotDelay=true, AutoShotFOV=true, AutoShotPredict=true
     }
-
     local list = {}
     for k, v in pairs(S) do
         if v == true and not exclude[k] then table.insert(list, k) end
     end
     table.sort(list)
-
     for i, name in ipairs(list) do
         local L = Instance.new("TextLabel")
         L.Size = UDim2.new(1, -10, 0, 18)
@@ -171,7 +164,6 @@ local ColM = makeCol("MOVEMENT", 180)
 local ColR = makeCol("RENDER", 350)
 local ColX = makeCol("MISC", 520)
 
--- Panel
 local Panel = Instance.new("Frame")
 Panel.Size = UDim2.new(0, 300, 0, 400)
 Panel.Position = UDim2.new(1, 10, 0, 50)
@@ -600,4 +592,84 @@ RunService.RenderStepped:Connect(function()
     if not (closest and closest.Character and closest.Character:FindFirstChild("Head")) then return end
     local tHead = closest.Character.Head
     local tHrp = closest.Character:FindFirstChild("HumanoidRootPart")
-    local tVel = tHrp and tHrp.V
+    local tVel = tHrp and tHrp.Velocity or Vector3.new()
+    local dist = (myHead.Position - tHead.Position).Magnitude
+    local tTime = math.clamp(dist / 2000, 0.01, 0.2)
+    local pred = tHead.Position + tVel * tTime
+    local sm = S.FarAimS
+    if tVel.Y > 5 then sm = S.FarAimFastJump
+    elseif tVel.Magnitude > 20 then sm = math.min(S.FarAimS * 1.3, 1) end
+    local newCFrame = CFrame.lookAt(myHead.Position, pred)
+    Cam.CFrame = Cam.CFrame:Lerp(newCFrame, sm)
+end)
+
+-- AutoShot
+local lastShot = 0
+RunService.RenderStepped:Connect(function()
+    if not S.AutoShot then return end
+    if not LP.Character then return end
+    local now = tick()
+    if now - lastShot < S.AutoShotDelay then return end
+    local myHead = LP.Character:FindFirstChild("Head")
+    if not myHead then return end
+    local closest, shortest = nil, S.AutoShotRange
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character then
+            local head = p.Character:FindFirstChild("Head")
+            local hum = p.Character:FindFirstChild("Humanoid")
+            if head and hum and hum.Health > 0 then
+                local d = (myHead.Position - head.Position).Magnitude
+                if d < shortest then shortest = d; closest = p end
+            end
+        end
+    end
+    if not closest or not closest.Character then return end
+    local head = closest.Character:FindFirstChild("Head")
+    local hrp = closest.Character:FindFirstChild("HumanoidRootPart")
+    if not head then return end
+    local tVel = hrp and hrp.Velocity * S.AutoShotPredict or Vector3.new()
+    local dist = (myHead.Position - head.Position).Magnitude
+    local tTime = math.clamp(dist / 2000, 0.01, 0.3)
+    local pred = head.Position + tVel * tTime
+    local rp = RaycastParams.new()
+    rp.FilterType = Enum.RaycastFilterType.Exclude
+    rp.FilterDescendantsInstances = {LP.Character}
+    local rr = workspace:Raycast(myHead.Position, pred - myHead.Position, rp)
+    local vis = false
+    if rr then
+        if rr.Instance and rr.Instance:IsDescendantOf(closest.Character) then vis = true end
+    else vis = true end
+    if not vis then return end
+    local sp, onScr = Cam:WorldToViewportPoint(pred)
+    if not onScr then return end
+    local vp = Cam.ViewportSize
+    local cx, cy = vp.X / 2, vp.Y / 2
+    local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
+    if dC > S.AutoShotFOV then return end
+    local cr = workspace:Raycast(myHead.Position, head.Position - myHead.Position, rp)
+    if cr and cr.Instance and not cr.Instance:IsDescendantOf(closest.Character) then return end
+    local tool = LP.Character:FindFirstChildOfClass("Tool")
+    if tool then tool:Activate() end
+    if mouse1click then pcall(mouse1click) end
+    lastShot = now
+end)
+
+-- Spin
+RunService.RenderStepped:Connect(function()
+    if not S.Spin then return end
+    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = LP.Character.HumanoidRootPart
+    hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(S.SpinV), 0)
+end)
+
+-- Magnet
+RunService.RenderStepped:Connect(function()
+    if not S.Magnet then return end
+    if not LP.Character or not LP.Character:FindFirstChild("HumanoidRootPart") then return end
+    local hrp = LP.Character.HumanoidRootPart
+    local c, s = nil, S.MagR
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and p.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (hrp.Position - p.Character.HumanoidRootPart.Position).Magnitude
+            if d < s then s = d; c = p end
+        end

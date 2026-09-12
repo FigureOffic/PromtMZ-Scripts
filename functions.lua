@@ -191,37 +191,50 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ==================================================
--- AUTOSHOT — СТАРЫЙ, ПРОСТОЙ, БЫСТРЫЙ
+-- AUTOSHOT — супер быстрые клики, пока прицел на голове
 -- ==================================================
-local lastShot = 0
 RunService.RenderStepped:Connect(function()
     if not S.AutoShot or not LP.Character then return end
-    local now = tick()
-    if now - lastShot < S.AutoShotDelay then return end
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
 
+    -- Ищем ближайшую ВИДИМУЮ цель
     local targets = getTargets()
     local closest, shortest = nil, S.AutoShotRange
     for _, t in ipairs(targets) do
         local d = (myHead.Position - t.head.Position).Magnitude
-        if d < shortest then shortest = d; closest = t end
-    end
-
-    if closest then
-        local sp, onScr = Cam:WorldToViewportPoint(closest.head.Position)
-        if onScr then
-            local vp = Cam.ViewportSize
-            local cx, cy = vp.X / 2, vp.Y / 2
-            local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
-            if dC <= S.AutoShotFOV then
-                local tool = LP.Character:FindFirstChildOfClass("Tool")
-                if tool then tool:Activate() end
-                if mouse1click then pcall(mouse1click) end
-                lastShot = now
+        if d < shortest then
+            local rp = RaycastParams.new()
+            rp.FilterType = Enum.RaycastFilterType.Exclude
+            rp.FilterDescendantsInstances = {LP.Character}
+            local rr = workspace:Raycast(myHead.Position, t.head.Position - myHead.Position, rp)
+            local visible = false
+            if rr then
+                if rr.Instance and rr.Instance:IsDescendantOf(t.char) then visible = true end
+            else
+                visible = true
+            end
+            if visible then
+                shortest = d
+                closest = t
             end
         end
     end
+
+    if not closest then return end
+
+    -- Проверка: прицел на голове?
+    local sp, onScr = Cam:WorldToViewportPoint(closest.head.Position)
+    if not onScr then return end
+    local vp = Cam.ViewportSize
+    local cx, cy = vp.X / 2, vp.Y / 2
+    local dC = math.sqrt((sp.X - cx)^2 + (sp.Y - cy)^2)
+    if dC > S.AutoShotFOV then return end
+
+    -- Клики супер быстро, пока цель в прицеле
+    local tool = LP.Character:FindFirstChildOfClass("Tool")
+    if tool then tool:Activate() end
+    if mouse1click then pcall(mouse1click) end
 end)
 
 -- Spin

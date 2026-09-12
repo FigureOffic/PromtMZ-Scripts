@@ -1,12 +1,15 @@
--- main.lua — GUI + HUD + Settings (RMB)
+-- main.lua
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local LP = Players.LocalPlayer
 
-_G.PromtMZ = _G.PromtMZ or {}
-local S = _G.PromtMZ.S or {
+-- Уникальные имена
+local UNIQUE = "PZ_" .. tostring(math.random(10000, 99999))
+
+_G[UNIQUE] = _G[UNIQUE] or {}
+local S = _G[UNIQUE].S or {
     KillAura=false, Aimbot=false, FarAim=false, AutoShot=false,
     Reach=false, Spin=false, Magnet=false, TP=false,
     Speed=false, Fly=false, Jump=false, Noclip=false, BHop=false,
@@ -21,12 +24,21 @@ local S = _G.PromtMZ.S or {
     AutoShotRange=200, AutoShotDelay=0.01, AutoShotFOV=30, AutoShotPredict=1.0,
     ParticleColor=Color3.fromRGB(255,100,200), ParticleSize=1.0, ParticleLifetime=1.5
 }
-_G.PromtMZ.S = S
+_G[UNIQUE].S = S
+
+-- Проверка античита
+local antiCheatFound = false
+for _, obj in ipairs(game:GetService("CoreGui"):GetDescendants()) do
+    if obj.Name:lower():find("anticheat") or obj.Name:lower():find("guard") or obj.Name:lower():find("ac") then
+        antiCheatFound = true
+        break
+    end
+end
 
 local Gui = Instance.new("ScreenGui")
-Gui.Name = "PromtMZ"
+Gui.Name = UNIQUE
 Gui.ResetOnSpawn = false
-Gui.Parent = game.CoreGui
+pcall(function() Gui.Parent = game.CoreGui end)
 
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -83,7 +95,6 @@ local ColM = makeCol("MOVEMENT", 180)
 local ColR = makeCol("RENDER", 350)
 local ColX = makeCol("MISC", 520)
 
--- Панель настроек
 local Panel = Instance.new("Frame")
 Panel.Name = "SettingsPanel"
 Panel.Size = UDim2.new(0, 280, 0, 400)
@@ -317,9 +328,9 @@ end)
 
 -- HUD
 local HudGui = Instance.new("ScreenGui")
-HudGui.Name = "PromtMZ_HUD"
+HudGui.Name = UNIQUE .. "_HUD"
 HudGui.ResetOnSpawn = false
-HudGui.Parent = game.CoreGui
+pcall(function() HudGui.Parent = game.CoreGui end)
 
 local Watermark = Instance.new("TextLabel")
 Watermark.Size = UDim2.new(0, 280, 0, 30)
@@ -354,7 +365,7 @@ RunService.RenderStepped:Connect(function()
         hudLabels = {}
         return
     end
-    Watermark.Text = "  PromtMZ | " .. LP.Name
+    Watermark.Text = "  PromtMZ | " .. LP.Name .. (antiCheatFound and " | AC" or "")
     for _, l in ipairs(hudLabels) do l:Destroy() end
     hudLabels = {}
     for k, v in pairs(S) do
@@ -373,4 +384,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] main загружен")
+print("[PromtMZ] main загружен | antiCheat:", antiCheatFound)

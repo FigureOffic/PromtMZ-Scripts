@@ -12,10 +12,15 @@ if not S then
     return
 end
 
+-- Универсальный поиск цели с игнором ForceField
 local function getTargets()
     local targets = {}
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character then
+            -- ⛔ Пропускаем, если есть ForceField (защита после спавна)
+            if p.Character:FindFirstChildOfClass("ForceField") then
+                continue
+            end
             local hum = p.Character:FindFirstChildOfClass("Humanoid")
             local head = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HeadMesh")
             if hum and head and hum.Health > 0 then
@@ -136,7 +141,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- Aimbot (сначала без стены, потом остальные)
+-- Aimbot
 RunService.RenderStepped:Connect(function()
     if not S.Aimbot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
@@ -173,54 +178,24 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- FarAim (без кусков — всегда в голову)
+-- FarAim
 RunService.RenderStepped:Connect(function()
     if not S.FarAim or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
     if not myHead then return end
-
     local targets = getTargets()
-
-    local function isVisible(t)
-        local rp = RaycastParams.new()
-        rp.FilterType = Enum.RaycastFilterType.Exclude
-        rp.FilterDescendantsInstances = {LP.Character}
-        local rr = workspace:Raycast(myHead.Position, t.head.Position - myHead.Position, rp)
-        if rr then
-            if rr.Instance and rr.Instance:IsDescendantOf(t.char) then return true end
-            return false
-        end
-        return true
-    end
-
-    local visibleTarget, visibleDist = nil, S.FarR
+    local closest, shortest = nil, S.FarR
     for _, t in ipairs(targets) do
         local d = (myHead.Position - t.head.Position).Magnitude
-        if d < visibleDist and isVisible(t) then
-            visibleDist = d
-            visibleTarget = t
-        end
+        if d < shortest then shortest = d; closest = t end
     end
-
-    local blockedTarget, blockedDist = nil, S.FarR
-    if not visibleTarget then
-        for _, t in ipairs(targets) do
-            local d = (myHead.Position - t.head.Position).Magnitude
-            if d < blockedDist then
-                blockedDist = d
-                blockedTarget = t
-            end
-        end
-    end
-
-    local target = visibleTarget or blockedTarget
-    if target then
-        local newCFrame = CFrame.lookAt(myHead.Position, target.head.Position)
+    if closest then
+        local newCFrame = CFrame.lookAt(myHead.Position, closest.head.Position)
         Cam.CFrame = Cam.CFrame:Lerp(newCFrame, S.FarAimS)
     end
 end)
 
--- AUTOSHOT — клики пока прицел на голове
+-- AutoShot
 RunService.RenderStepped:Connect(function()
     if not S.AutoShot or not LP.Character then return end
     local myHead = LP.Character:FindFirstChild("Head")
@@ -238,9 +213,7 @@ RunService.RenderStepped:Connect(function()
             local visible = false
             if rr then
                 if rr.Instance and rr.Instance:IsDescendantOf(t.char) then visible = true end
-            else
-                visible = true
-            end
+            else visible = true end
             if visible then
                 shortest = d
                 closest = t
@@ -321,4 +294,4 @@ task.spawn(function()
     end
 end)
 
-print("[PromtMZ] functions загружены")
+print("[PromtMZ] functions загружены (ForceField ignore)")

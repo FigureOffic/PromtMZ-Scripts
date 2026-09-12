@@ -1,6 +1,9 @@
 -- visuals.lua
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UIS = game:GetService("UserInputService")
+local Debris = game:GetService("Debris")
 local LP = Players.LocalPlayer
 local Cam = workspace.CurrentCamera
 
@@ -11,15 +14,128 @@ if not S then
 end
 
 local ok = pcall(function() return Drawing.new("Text") end)
+
+-- ================= JUMP CIRCLES + CLICK BURST =================
+local CONFIG = {
+    JumpCircles = true,
+    CircleCount = 4,
+    CircleSize = 3,
+    CircleColor = Color3.fromRGB(224, 205, 178),
+    ClickParticles = true,
+    ParticleCount = 18,
+    ParticleColor = Color3.fromRGB(224, 205, 178),
+    ParticleSpeed = 22,
+    ParticleLifetime = 0.55,
+}
+
+local function createJumpCircle(character)
+    if not S.Particles then return end
+    local root = character:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    for i = 1, CONFIG.CircleCount do
+        local circle = Instance.new("Part")
+        circle.Name = "JumpCircle"
+        circle.Shape = Enum.PartType.Cylinder
+        circle.Material = Enum.Material.Neon
+        circle.Color = S.ParticleColor or CONFIG.CircleColor
+        circle.Transparency = 0.15
+        circle.Size = Vector3.new(0.08, CONFIG.CircleSize + i * 0.35, CONFIG.CircleSize + i * 0.35)
+        circle.CFrame = root.CFrame * CFrame.new(0, -2.65, 0) * CFrame.Angles(0, 0, math.rad(90))
+        circle.Anchored = true
+        circle.CanCollide = false
+        circle.CanQuery = false
+        circle.CanTouch = false
+        circle.Parent = workspace
+
+        local targetSize = Vector3.new(0.03, CONFIG.CircleSize + i * 1.5, CONFIG.CircleSize + i * 1.5)
+        local tween = TweenService:Create(circle, TweenInfo.new(0.45 + i * 0.06, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+            Size = targetSize,
+            Transparency = 1
+        })
+        tween:Play()
+        Debris:AddItem(circle, 0.7)
+    end
+end
+
+local function setupCharacter(character)
+    local humanoid = character:WaitForChild("Humanoid")
+    humanoid.StateChanged:Connect(function(_, newState)
+        if newState == Enum.HumanoidStateType.Jumping then
+            createJumpCircle(character)
+        end
+    end)
+end
+
+if LP.Character then setupCharacter(LP.Character) end
+LP.CharacterAdded:Connect(setupCharacter)
+
+local function createClickBurst(position)
+    if not S.Particles then return end
+    local holder = Instance.new("Part")
+    holder.Name = "ClickBurst"
+    holder.Size = Vector3.new(0.1, 0.1, 0.1)
+    holder.Transparency = 1
+    holder.Anchored = true
+    holder.CanCollide = false
+    holder.CanQuery = false
+    holder.CanTouch = false
+    holder.Position = position
+    holder.Parent = workspace
+
+    local attachment = Instance.new("Attachment")
+    attachment.Parent = holder
+
+    local emitter = Instance.new("ParticleEmitter")
+    emitter.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+    emitter.Color = ColorSequence.new(S.ParticleColor or CONFIG.ParticleColor)
+    emitter.LightEmission = 0.7
+    emitter.LightInfluence = 0
+    emitter.Lifetime = NumberRange.new(CONFIG.ParticleLifetime * 0.7, CONFIG.ParticleLifetime)
+    emitter.Speed = NumberRange.new(CONFIG.ParticleSpeed * 0.7, CONFIG.ParticleSpeed)
+    emitter.SpreadAngle = Vector2.new(180, 180)
+    emitter.Rate = 0
+    emitter.EmissionDirection = Enum.NormalId.Front
+    emitter.Size = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0.16),
+        NumberSequenceKeypoint.new(0.35, 0.09),
+        NumberSequenceKeypoint.new(1, 0)
+    })
+    emitter.Transparency = NumberSequence.new({
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.7, 0.25),
+        NumberSequenceKeypoint.new(1, 1)
+    })
+    emitter.Rotation = NumberRange.new(0, 360)
+    emitter.RotSpeed = NumberRange.new(-220, 220)
+    emitter.Drag = 3
+    emitter.Parent = attachment
+    emitter:Emit(CONFIG.ParticleCount)
+    Debris:AddItem(holder, CONFIG.ParticleLifetime + 0.3)
+end
+
+local mouse = LP:GetMouse()
+mouse.Button1Down:Connect(function()
+    if not S.Particles then return end
+    local target = mouse.Target
+    if not target then return end
+    local model = target:FindFirstAncestorOfClass("Model")
+    if not model then return end
+    local humanoid = model:FindFirstChildOfClass("Humanoid")
+    local root = model:FindFirstChild("HumanoidRootPart")
+    if humanoid and root then
+        createClickBurst(root.Position)
+    end
+end)
+
+-- ================= ESP / SKELETON / BOX =================
 if not ok then return end
 
--- Универсальный поиск персонажа (для кастомных рендеров)
 local function getChar(p)
     if p.Character then
         local head = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HeadMesh")
         if head then return p.Character end
     end
-    -- Фолбэк: ищем модель с ником игрока
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and obj.Name == p.Name then
             if obj:FindFirstChildOfClass("Humanoid") then
@@ -42,7 +158,6 @@ local function getHRP(char)
     return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso")
 end
 
--- ESP
 local function espFor(p)
     local e = Drawing.new("Text")
     e.Visible = false
@@ -65,7 +180,6 @@ local function espFor(p)
     end)
 end
 
--- Skeleton (исправлен)
 local function skelFor(p)
     local lines = {}
     for i = 1, 5 do
@@ -105,7 +219,6 @@ local function skelFor(p)
             lines[1].From = Vector2.new(hp.X, hp.Y)
             lines[1].To = Vector2.new(tp.X, tp.Y)
             lines[1].Visible = true
-
             local function setLine(i, part)
                 if part then
                     local a, b = Cam:WorldToViewportPoint(part.Position)
@@ -113,12 +226,8 @@ local function skelFor(p)
                         lines[i].From = Vector2.new(tp.X, tp.Y)
                         lines[i].To = Vector2.new(a.X, a.Y)
                         lines[i].Visible = true
-                    else
-                        lines[i].Visible = false
-                    end
-                else
-                    lines[i].Visible = false
-                end
+                    else lines[i].Visible = false end
+                else lines[i].Visible = false end
             end
             setLine(2, larm)
             setLine(3, rarm)
@@ -130,7 +239,6 @@ local function skelFor(p)
     end)
 end
 
--- Box (исправлен)
 local function boxFor(p)
     local b = Drawing.new("Square")
     b.Visible = false
@@ -142,11 +250,9 @@ local function boxFor(p)
         local char = getChar(p)
         local hum = char and char:FindFirstChildOfClass("Humanoid")
         if not char or not hum or hum.Health <= 0 then b.Visible = false return end
-
         local hrp = getHRP(char)
         local head = getHead(char)
         if not hrp or not head then b.Visible = false return end
-
         local pos, on = Cam:WorldToViewportPoint(hrp.Position)
         local hpos, hon = Cam:WorldToViewportPoint(head.Position)
         if on and hon then
@@ -157,9 +263,7 @@ local function boxFor(p)
             b.Size = Vector2.new(width, height)
             b.Position = Vector2.new(pos.X - width / 2, top)
             b.Visible = true
-        else
-            b.Visible = false
-        end
+        else b.Visible = false end
     end)
 end
 

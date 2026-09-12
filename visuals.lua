@@ -131,15 +131,7 @@ mouse.Button1Down:Connect(function()
     end
 end)
 
--- ================= CHAMS (Glossy Highlight, видно сквозь стены) =================
-local ChamsConfig = {
-    FillColor = Color3.fromRGB(235, 220, 195),
-    OutlineColor = Color3.fromRGB(255, 248, 230),
-    FillTransparency = 0.18,
-    OutlineTransparency = 0,
-    UseShine = true,
-}
-
+-- ================= CHAMS =================
 local function addGlossyHighlight(character)
     if not character then return end
     if not S.Chams then
@@ -153,20 +145,15 @@ local function addGlossyHighlight(character)
 
     local highlight = Instance.new("Highlight")
     highlight.Name = "GlossyHighlight"
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop  -- ← видно сквозь стены
-    highlight.FillColor = ChamsConfig.FillColor
-    highlight.FillTransparency = ChamsConfig.FillTransparency
-    highlight.OutlineColor = ChamsConfig.OutlineColor
-    highlight.OutlineTransparency = ChamsConfig.OutlineTransparency
+    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+    highlight.FillColor = Color3.fromRGB(235, 220, 195)
+    highlight.FillTransparency = 0.18
+    highlight.OutlineColor = Color3.fromRGB(255, 248, 230)
+    highlight.OutlineTransparency = 0
     highlight.Enabled = true
     highlight.Parent = character
-
-    if ChamsConfig.UseShine then
-        highlight:SetAttribute("Glossy", true)
-    end
 end
 
--- Обновление Chams при переключении
 RunService.RenderStepped:Connect(function()
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character then
@@ -182,9 +169,7 @@ end)
 
 local function setupPlayer(player)
     if player.Character then
-        task.defer(function()
-            addGlossyHighlight(player.Character)
-        end)
+        task.defer(function() addGlossyHighlight(player.Character) end)
     end
     player.CharacterAdded:Connect(function(character)
         character:WaitForChild("Humanoid", 5)
@@ -198,6 +183,199 @@ for _, player in ipairs(Players:GetPlayers()) do
 end
 Players.PlayerAdded:Connect(function(player)
     if player ~= LP then setupPlayer(player) end
+end)
+
+-- ================= TARGET HUD =================
+local TargetGui = Instance.new("ScreenGui")
+TargetGui.Name = "PromtMZ_TargetHUD"
+TargetGui.ResetOnSpawn = false
+TargetGui.IgnoreGuiInset = true
+pcall(function() TargetGui.Parent = game.CoreGui end)
+
+local TH = {
+    Width = 245,
+    Height = 72,
+    Position = UDim2.new(0.5, -330, 0.5, 45),
+    Background = Color3.fromRGB(35, 29, 24),
+    Card = Color3.fromRGB(49, 41, 34),
+    Accent = Color3.fromRGB(224, 194, 155),
+    Text = Color3.fromRGB(245, 235, 220),
+    SubText = Color3.fromRGB(180, 165, 148),
+    Health = Color3.fromRGB(116, 190, 120),
+    CornerRadius = 12,
+}
+
+local TargetShadow = Instance.new("Frame")
+TargetShadow.Size = UDim2.fromOffset(TH.Width + 6, TH.Height + 6)
+TargetShadow.Position = TH.Position + UDim2.fromOffset(4, 5)
+TargetShadow.BackgroundColor3 = Color3.fromRGB(15, 12, 10)
+TargetShadow.BackgroundTransparency = 0.65
+TargetShadow.BorderSizePixel = 0
+TargetShadow.Visible = false
+TargetShadow.Parent = TargetGui
+Instance.new("UICorner", TargetShadow).CornerRadius = UDim.new(0, TH.CornerRadius + 2)
+
+local TargetMain = Instance.new("Frame")
+TargetMain.Size = UDim2.fromOffset(TH.Width, TH.Height)
+TargetMain.Position = TH.Position + UDim2.fromOffset(-15, 0)
+TargetMain.BackgroundColor3 = TH.Background
+TargetMain.BackgroundTransparency = 0.04
+TargetMain.BorderSizePixel = 0
+TargetMain.Visible = false
+TargetMain.Parent = TargetGui
+Instance.new("UICorner", TargetMain).CornerRadius = UDim.new(0, TH.CornerRadius)
+
+local TargetStroke = Instance.new("UIStroke")
+TargetStroke.Color = TH.Accent
+TargetStroke.Transparency = 0.7
+TargetStroke.Thickness = 1
+TargetStroke.Parent = TargetMain
+
+-- Head
+local HeadFrame = Instance.new("Frame")
+HeadFrame.Size = UDim2.fromOffset(54, 54)
+HeadFrame.Position = UDim2.fromOffset(9, 9)
+HeadFrame.BackgroundColor3 = TH.Card
+HeadFrame.BorderSizePixel = 0
+HeadFrame.ClipsDescendants = true
+HeadFrame.Parent = TargetMain
+Instance.new("UICorner", HeadFrame).CornerRadius = UDim.new(0, 9)
+
+local HeadStroke = Instance.new("UIStroke")
+HeadStroke.Color = TH.Accent
+HeadStroke.Transparency = 0.35
+HeadStroke.Thickness = 1
+HeadStroke.Parent = HeadFrame
+
+local HeadImage = Instance.new("ImageLabel")
+HeadImage.Size = UDim2.fromScale(1, 1)
+HeadImage.BackgroundTransparency = 1
+HeadImage.ScaleType = Enum.ScaleType.Crop
+HeadImage.Parent = HeadFrame
+Instance.new("UICorner", HeadImage).CornerRadius = UDim.new(0, 8)
+
+-- Info
+local Info = Instance.new("Frame")
+Info.Size = UDim2.new(1, -76, 1, -12)
+Info.Position = UDim2.fromOffset(72, 6)
+Info.BackgroundTransparency = 1
+Info.Parent = TargetMain
+
+local NameLabel = Instance.new("TextLabel")
+NameLabel.Size = UDim2.new(1, 0, 0, 25)
+NameLabel.Position = UDim2.fromOffset(0, 2)
+NameLabel.BackgroundTransparency = 1
+NameLabel.Font = Enum.Font.GothamSemibold
+NameLabel.TextSize = 15
+NameLabel.TextColor3 = TH.Text
+NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+NameLabel.Parent = Info
+
+local HPLabel = Instance.new("TextLabel")
+HPLabel.Size = UDim2.new(1, 0, 0, 17)
+HPLabel.Position = UDim2.fromOffset(0, 26)
+HPLabel.BackgroundTransparency = 1
+HPLabel.Font = Enum.Font.Gotham
+HPLabel.TextSize = 11
+HPLabel.TextColor3 = TH.SubText
+HPLabel.TextXAlignment = Enum.TextXAlignment.Left
+HPLabel.Parent = Info
+
+local HealthBg = Instance.new("Frame")
+HealthBg.Size = UDim2.new(1, -2, 0, 5)
+HealthBg.Position = UDim2.new(0, 0, 1, -10)
+HealthBg.BackgroundColor3 = Color3.fromRGB(70, 60, 51)
+HealthBg.BorderSizePixel = 0
+HealthBg.Parent = Info
+Instance.new("UICorner", HealthBg).CornerRadius = UDim.new(1, 0)
+
+local HealthBar = Instance.new("Frame")
+HealthBar.Size = UDim2.fromScale(1, 1)
+HealthBar.BackgroundColor3 = TH.Health
+HealthBar.BorderSizePixel = 0
+HealthBar.Parent = HealthBg
+Instance.new("UICorner", HealthBar).CornerRadius = UDim.new(1, 0)
+
+-- TARGET LOGIC
+local currentTarget = nil
+
+local function getTarget()
+    local mousePosition = UIS:GetMouseLocation()
+    local ray = Cam:ViewportPointToRay(mousePosition.X, mousePosition.Y)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {LP.Character}
+    local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+    if not result then return nil end
+    local character = result.Instance:FindFirstAncestorOfClass("Model")
+    if not character then return nil end
+    local humanoid = character:FindFirstChildOfClass("Humanoid")
+    if not humanoid or humanoid.Health <= 0 then return nil end
+    local player = Players:GetPlayerFromCharacter(character)
+    if not player or player == LP then return nil end
+    return player, humanoid
+end
+
+local function updatePortrait(player)
+    pcall(function()
+        HeadImage.Image = Players:GetUserThumbnailAsync(player.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size100x100)
+    end)
+end
+
+local function showTarget(player, humanoid)
+    currentTarget = player
+    NameLabel.Text = player.DisplayName
+    if player.DisplayName ~= player.Name then
+        NameLabel.Text = player.DisplayName .. "  @" .. player.Name
+    end
+    updatePortrait(player)
+    local hp = math.max(0, humanoid.Health)
+    local maxHP = math.max(1, humanoid.MaxHealth)
+    local percent = math.clamp(hp / maxHP, 0, 1)
+    HPLabel.Text = string.format("%d / %d HP", math.floor(hp), math.floor(maxHP))
+    HealthBar.Size = UDim2.new(percent, 0, 1, 0)
+    TargetMain.Visible = true
+    TargetShadow.Visible = true
+    TargetMain.Position = TH.Position + UDim2.fromOffset(-15, 0)
+    TargetShadow.Position = TH.Position + UDim2.fromOffset(-11, 5)
+    TweenService:Create(TargetMain, TweenInfo.new(0.22, Enum.EasingStyle.Quint), { Position = TH.Position }):Play()
+    TweenService:Create(TargetShadow, TweenInfo.new(0.22, Enum.EasingStyle.Quint), { Position = TH.Position + UDim2.fromOffset(4, 5) }):Play()
+end
+
+local function hideTarget()
+    currentTarget = nil
+    TargetMain.Visible = false
+    TargetShadow.Visible = false
+end
+
+RunService.RenderStepped:Connect(function()
+    if not S.TargetHUD then
+        if TargetMain.Visible then hideTarget() end
+        return
+    end
+
+    local player, humanoid = getTarget()
+    if player and humanoid then
+        if player ~= currentTarget then
+            showTarget(player, humanoid)
+        else
+            local hp = math.max(0, humanoid.Health)
+            local maxHP = math.max(1, humanoid.MaxHealth)
+            local percent = math.clamp(hp / maxHP, 0, 1)
+            HPLabel.Text = string.format("%d / %d HP", math.floor(hp), math.floor(maxHP))
+            HealthBar.Size = UDim2.new(percent, 0, 1, 0)
+            if percent > 0.6 then
+                HealthBar.BackgroundColor3 = Color3.fromRGB(116, 190, 120)
+            elseif percent > 0.3 then
+                HealthBar.BackgroundColor3 = Color3.fromRGB(220, 180, 95)
+            else
+                HealthBar.BackgroundColor3 = Color3.fromRGB(205, 95, 80)
+            end
+        end
+    elseif currentTarget then
+        hideTarget()
+    end
 end)
 
 -- ================= ESP / SKELETON / BOX =================
@@ -351,4 +529,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD)")

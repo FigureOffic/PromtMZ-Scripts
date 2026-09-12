@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (fixed)
+-- main.lua — PromtMZ Cozy Beige UI (fixed + smooth drag)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -601,31 +601,127 @@ local function close()
     end)
 end
 
--- DRAG
-local drag = false
+----------------------------------------------------------------
+-- SMOOTH DRAG + INERTIA
+----------------------------------------------------------------
+
+local dragging = false
 local dragStart
 local startPos
 
+local velocity = Vector2.zero
+local lastMousePos
+local lastTime = os.clock()
+
+local inertiaConnection
+
+local function setWindowPosition(pos)
+    Main.Position = pos
+
+    Shadow.Position = UDim2.new(
+        pos.X.Scale,
+        pos.X.Offset + 8,
+        pos.Y.Scale,
+        pos.Y.Offset + 8
+    )
+end
+
+local function startInertia()
+    if inertiaConnection then
+        inertiaConnection:Disconnect()
+        inertiaConnection = nil
+    end
+
+    local last = os.clock()
+
+    inertiaConnection = RunService.RenderStepped:Connect(function()
+        if dragging then return end
+
+        local now = os.clock()
+        local dt = math.clamp(now - last, 0, 0.05)
+        last = now
+
+        if velocity.Magnitude > 2 then
+            local current = Main.Position
+
+            local nextX = current.X.Offset + velocity.X * dt
+            local nextY = current.Y.Offset + velocity.Y * dt
+
+            local nextPos = UDim2.new(current.X.Scale, nextX, current.Y.Scale, nextY)
+            setWindowPosition(nextPos)
+
+            local friction = math.pow(0.055, dt)
+            velocity *= friction
+        else
+            velocity = Vector2.zero
+
+            if inertiaConnection then
+                inertiaConnection:Disconnect()
+                inertiaConnection = nil
+            end
+        end
+    end)
+end
+
 Header.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = true
-        dragStart = input.Position
-        startPos = Main.Position
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then
+        return
+    end
+
+    dragging = true
+    dragStart = input.Position
+    startPos = Main.Position
+    lastMousePos = input.Position
+    lastTime = os.clock()
+    velocity = Vector2.zero
+
+    if inertiaConnection then
+        inertiaConnection:Disconnect()
+        inertiaConnection = nil
     end
 end)
 
 UIS.InputChanged:Connect(function(input)
-    if drag and input.UserInputType == Enum.UserInputType.MouseMovement then
-        local delta = input.Position - dragStart
-        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-        Shadow.Position = UDim2.new(Main.Position.X.Scale, Main.Position.X.Offset + 8, Main.Position.Y.Scale, Main.Position.Y.Offset + 8)
-    end
+    if not dragging then return end
+    if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+
+    local now = os.clock()
+    local dt = math.max(now - lastTime, 0.001)
+
+    local mousePos = input.Position
+    local delta = mousePos - dragStart
+
+    local newPos = UDim2.new(
+        startPos.X.Scale,
+        startPos.X.Offset + delta.X,
+        startPos.Y.Scale,
+        startPos.Y.Offset + delta.Y
+    )
+
+    setWindowPosition(newPos)
+
+    local movement = mousePos - lastMousePos
+    local currentVelocity = movement / dt
+
+    velocity = velocity:Lerp(
+        Vector2.new(
+            math.clamp(currentVelocity.X, -2500, 2500),
+            math.clamp(currentVelocity.Y, -2500, 2500)
+        ),
+        0.35
+    )
+
+    lastMousePos = mousePos
+    lastTime = now
 end)
 
 UIS.InputEnded:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        drag = false
-    end
+    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+    if not dragging then return end
+
+    dragging = false
+    velocity *= 0.72
+    startInertia()
 end)
 
 -- HOTKEYS
@@ -700,4 +796,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен")
+print("[PromtMZ] Cozy Beige UI загружен (smooth drag)")

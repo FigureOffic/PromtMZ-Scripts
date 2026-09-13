@@ -12,7 +12,6 @@ if not S then
     return
 end
 
--- Универсальный поиск цели с игнором ForceField
 local function getTargets()
     local targets = {}
     for _, p in ipairs(Players:GetPlayers()) do
@@ -270,8 +269,9 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ================= FLING =================
+-- ================= FLING (только для касания) =================
 local flingPart = nil
+local flingAngle = 0
 
 local function stopFling()
     if flingPart then
@@ -283,40 +283,67 @@ end
 local function startFling()
     if flingPart then return end
     if not LP.Character then return end
-    local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
-    if not hrp then return end
 
     local part = Instance.new("Part")
     part.Name = "PromtMZ_FlingPart"
-    part.Size = Vector3.new(5, 5, 5)
+    part.Size = Vector3.new(3, 3, 3)
     part.Shape = Enum.PartType.Ball
-    part.Anchored = false
-    part.CanCollide = true
+    part.Anchored = true
+    part.CanCollide = false
+    part.CanQuery = false
+    part.CanTouch = true
     part.Transparency = 0.7
     part.Color = Color3.fromRGB(145, 55, 255)
     part.Material = Enum.Material.Neon
     part.Massless = true
     part.Parent = workspace
 
-    local weld = Instance.new("WeldConstraint")
-    weld.Part0 = hrp
-    weld.Part1 = part
-    weld.Parent = part
-
-    local angular = Instance.new("BodyAngularVelocity")
-    angular.AngularVelocity = Vector3.new(0, 99999, 0)
-    angular.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    angular.Parent = part
-
     flingPart = part
+
+    part.Touched:Connect(function(hit)
+        if not S.Fling then return end
+        local model = hit:FindFirstAncestorOfClass("Model")
+        if not model then return end
+        if model == LP.Character then return end
+
+        local hum = model:FindFirstChildOfClass("Humanoid")
+        local hrp = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso")
+        if not hum or not hrp then return end
+        if hum.Health <= 0 then return end
+
+        local myHrp = LP.Character and LP.Character:FindFirstChild("HumanoidRootPart")
+        if not myHrp then return end
+
+        local dir = (hrp.Position - myHrp.Position)
+        if dir.Magnitude < 0.1 then dir = Vector3.new(1, 0, 0) end
+        dir = dir.Unit
+
+        hrp.Velocity = Vector3.new(dir.X * 250, 150, dir.Z * 250)
+        hrp.RotVelocity = Vector3.new(0, 99999, 0)
+    end)
 end
 
-RunService.Heartbeat:Connect(function()
+RunService.Heartbeat:Connect(function(dt)
     if not S.Fling then
         if flingPart then stopFling() end
         return
     end
     if not flingPart then startFling() end
+
+    if flingPart and LP.Character then
+        local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            flingAngle += dt * 10
+            local radius = 4
+            flingPart.CFrame = CFrame.new(
+                hrp.Position + Vector3.new(
+                    math.cos(flingAngle) * radius,
+                    2,
+                    math.sin(flingAngle) * radius
+                )
+            )
+        end
+    end
 end)
 
 LP.CharacterAdded:Connect(function()
@@ -348,4 +375,4 @@ task.spawn(function()
     end
 end)
 
-print("[PromtMZ] functions загружены (Fling + ForceField ignore)")
+print("[PromtMZ] functions загружены (Fling fixed + ForceField ignore)")

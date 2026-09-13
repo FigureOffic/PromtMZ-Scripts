@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization)
+-- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization + Console)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,6 +16,7 @@ local S = _G.PromtMZ.S or {
     ESP=false, Skeleton=false, Box=false, ChinaHat=false,
     Particles=false, Chams=false, TargetHUD=false, Music=false,
     AspectRatio=false, MotionBlur=false, Optimization=false,
+    Console=false,
     AntiAFK=false, AutoClick=false,
 
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
@@ -36,7 +37,6 @@ local S = _G.PromtMZ.S or {
     ParticleSize=1.0,
     ParticleLifetime=1.5,
 
-    AspectRatioValue=1.0,
     MotionBlurStrength=12
 }
 
@@ -556,12 +556,182 @@ makeBtn(ColR, "Particles", "Particles")
 makeBtn(ColR, "Chams", "Chams")
 makeBtn(ColR, "TargetHUD", "TargetHUD")
 makeBtn(ColR, "Music", "Music")
-makeBtn(ColR, "Aspect Ratio", "AspectRatio")
+makeBtn(ColR, "Aspect 4:3", "AspectRatio")
 makeBtn(ColR, "Motion Blur", "MotionBlur")
 makeBtn(ColR, "Optimization", "Optimization")
 
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
+makeBtn(ColX, "Console", "Console")
+
+-- CONSOLE WINDOW
+local ConsoleGui = Instance.new("ScreenGui")
+ConsoleGui.Name = "PromtMZ_Console"
+ConsoleGui.ResetOnSpawn = false
+ConsoleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+pcall(function() ConsoleGui.Parent = game.CoreGui end)
+
+local ConsoleFrame = Instance.new("Frame")
+ConsoleFrame.Name = "ConsoleFrame"
+ConsoleFrame.Size = UDim2.new(0, 600, 0, 400)
+ConsoleFrame.Position = UDim2.new(0.5, -300, 0.5, -200)
+ConsoleFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+ConsoleFrame.BorderSizePixel = 0
+ConsoleFrame.Visible = false
+ConsoleFrame.ZIndex = 100
+ConsoleFrame.Parent = ConsoleGui
+corner(ConsoleFrame, 14)
+stroke(ConsoleFrame, C.Beige2, 0.5, 1)
+
+local ConsoleHeader = Instance.new("Frame")
+ConsoleHeader.Size = UDim2.new(1, 0, 0, 36)
+ConsoleHeader.BackgroundColor3 = C.Cream2
+ConsoleHeader.BorderSizePixel = 0
+ConsoleHeader.ZIndex = 101
+ConsoleHeader.Parent = ConsoleFrame
+corner(ConsoleHeader, 14)
+
+local ConsoleTitle = Instance.new("TextLabel")
+ConsoleTitle.Size = UDim2.new(1, -60, 1, 0)
+ConsoleTitle.Position = UDim2.new(0, 15, 0, 0)
+ConsoleTitle.BackgroundTransparency = 1
+ConsoleTitle.Text = "Console"
+ConsoleTitle.TextColor3 = C.Text
+ConsoleTitle.TextSize = 13
+ConsoleTitle.Font = Enum.Font.GothamBold
+ConsoleTitle.TextXAlignment = Enum.TextXAlignment.Left
+ConsoleTitle.ZIndex = 102
+ConsoleTitle.Parent = ConsoleHeader
+
+local ConsoleClose = Instance.new("TextButton")
+ConsoleClose.Size = UDim2.new(0, 30, 0, 30)
+ConsoleClose.Position = UDim2.new(1, -36, 0, 3)
+ConsoleClose.BackgroundTransparency = 1
+ConsoleClose.Text = "×"
+ConsoleClose.TextColor3 = C.Muted
+ConsoleClose.TextSize = 20
+ConsoleClose.Font = Enum.Font.GothamBold
+ConsoleClose.AutoButtonColor = false
+ConsoleClose.ZIndex = 102
+ConsoleClose.Parent = ConsoleHeader
+
+ConsoleClose.MouseButton1Click:Connect(function()
+    ConsoleFrame.Visible = false
+end)
+
+local ConsoleOutput = Instance.new("ScrollingFrame")
+ConsoleOutput.Size = UDim2.new(1, -20, 1, -90)
+ConsoleOutput.Position = UDim2.new(0, 10, 0, 42)
+ConsoleOutput.BackgroundTransparency = 1
+ConsoleOutput.BorderSizePixel = 0
+ConsoleOutput.ScrollBarThickness = 4
+ConsoleOutput.ScrollBarImageColor3 = C.BeigeDark
+ConsoleOutput.AutomaticCanvasSize = Enum.AutomaticSize.Y
+ConsoleOutput.CanvasSize = UDim2.new(0, 0, 0, 0)
+ConsoleOutput.ZIndex = 101
+ConsoleOutput.Parent = ConsoleFrame
+
+local ConsoleLayout = Instance.new("UIListLayout")
+ConsoleLayout.Padding = UDim.new(0, 4)
+ConsoleLayout.Parent = ConsoleOutput
+
+local ConsoleInput = Instance.new("TextBox")
+ConsoleInput.Size = UDim2.new(1, -20, 0, 34)
+ConsoleInput.Position = UDim2.new(0, 10, 1, -44)
+ConsoleInput.BackgroundColor3 = Color3.fromRGB(35, 30, 26)
+ConsoleInput.BorderSizePixel = 0
+ConsoleInput.Text = ""
+ConsoleInput.PlaceholderText = "Введите команду..."
+ConsoleInput.TextColor3 = C.Text
+ConsoleInput.PlaceholderColor3 = C.Muted
+ConsoleInput.TextSize = 12
+ConsoleInput.Font = Enum.Font.Gotham
+ConsoleInput.TextXAlignment = Enum.TextXAlignment.Left
+ConsoleInput.ClearTextOnFocus = false
+ConsoleInput.ZIndex = 102
+ConsoleInput.Parent = ConsoleFrame
+corner(ConsoleInput, 8)
+stroke(ConsoleInput, C.Beige2, 0.6, 1)
+
+local function consolePrint(text, color)
+    local L = Instance.new("TextLabel")
+    L.Size = UDim2.new(1, 0, 0, 18)
+    L.BackgroundTransparency = 1
+    L.Text = text
+    L.TextColor3 = color or C.Text
+    L.TextSize = 11
+    L.Font = Enum.Font.Code
+    L.TextXAlignment = Enum.TextXAlignment.Left
+    L.TextWrapped = true
+    L.ZIndex = 101
+    L.Parent = ConsoleOutput
+end
+
+-- API команд
+_G.PromtMZ.Console = {
+    print = consolePrint
+}
+
+ConsoleInput.FocusLost:Connect(function(enterPressed)
+    if not enterPressed then return end
+    local cmd = ConsoleInput.Text
+    if cmd == "" then return end
+    ConsoleInput.Text = ""
+    
+    consolePrint("> " .. cmd, C.Warm)
+    
+    -- Обработка команд
+    local args = {}
+    for word in cmd:gmatch("%S+") do
+        table.insert(args, word)
+    end
+    
+    if args[1] == "help" then
+        consolePrint("Доступные команды:", C.WarmDark)
+        consolePrint("  help — список команд", C.TextSoft)
+        consolePrint("  clear — очистить консоль", C.TextSoft)
+        consolePrint("  toggle <функция> — вкл/выкл функцию", C.TextSoft)
+        consolePrint("  set <параметр> <значение> — установить значение", C.TextSoft)
+    elseif args[1] == "clear" then
+        for _, child in ipairs(ConsoleOutput:GetChildren()) do
+            if child:IsA("TextLabel") then
+                child:Destroy()
+            end
+        end
+        consolePrint("Консоль очищена", C.Warm)
+    elseif args[1] == "toggle" and args[2] then
+        local key = args[2]
+        if S[key] ~= nil and type(S[key]) == "boolean" then
+            S[key] = not S[key]
+            consolePrint("[OK] " .. key .. " = " .. tostring(S[key]), C.Warm)
+        else
+            consolePrint("[ERR] Функция не найдена: " .. key, Color3.fromRGB(205, 95, 80))
+        end
+    elseif args[1] == "set" and args[2] and args[3] then
+        local key = args[2]
+        local val = tonumber(args[3])
+        if val and S[key] ~= nil then
+            S[key] = val
+            consolePrint("[OK] " .. key .. " = " .. val, C.Warm)
+        else
+            consolePrint("[ERR] Неверный параметр или значение", Color3.fromRGB(205, 95, 80))
+        end
+    else
+        consolePrint("[ERR] Неизвестная команда: " .. args[1], Color3.fromRGB(205, 95, 80))
+    end
+end)
+
+-- Открытие Console по кнопке
+local origMakeBtnClick = nil
+
+-- Автоматическое открытие при включении Console
+RunService.RenderStepped:Connect(function()
+    if S.Console and not ConsoleFrame.Visible then
+        ConsoleFrame.Visible = true
+    elseif not S.Console and ConsoleFrame.Visible then
+        ConsoleFrame.Visible = false
+    end
+end)
 
 -- OPEN / CLOSE
 local opened = false
@@ -771,4 +941,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization)")
+print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console)")

@@ -732,4 +732,4 @@ ConsoleLayout.Parent = ConsoleOutput
 local ConsoleInput = Instance.new("TextBox")
 ConsoleInput.Size = UDim2.new(1, -20, 0, 34)
 ConsoleInput.Position = UDim2.new(0, 10, 1, -44)
-ConsoleInput.BackgroundColor3 = C.C
+ConsoleInput.BackgroundColor3 = C.Card

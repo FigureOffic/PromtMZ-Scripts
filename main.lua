@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Black & Purple Ultra Smooth GUI
+-- main.lua — PromtMZ Black & Purple Ultra Smooth GUI (with Fling)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -11,7 +11,7 @@ _G.PromtMZ = _G.PromtMZ or {}
 
 local S = _G.PromtMZ.S or {
     KillAura=false, Aimbot=false, FarAim=false, AutoShot=false,
-    Reach=false, Spin=false, Magnet=false, TP=false,
+    Reach=false, Spin=false, Magnet=false, TP=false, Fling=false,
     Speed=false, Fly=false, Jump=false, Noclip=false, BHop=false,
     LeaveTp=false, Fog=true, Fullbright=false, HUD=false,
     ESP=false, Skeleton=false, Box=false, ChinaHat=false,
@@ -19,40 +19,45 @@ local S = _G.PromtMZ.S or {
     AspectRatio=false, MotionBlur=false, Optimization=false,
     Console=false, Saturation=false,
     AntiAFK=false, AutoClick=false,
+
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
     SpinV=100, MagR=30, MagS=5, AimS=0.15,
     FarR=500, BHopB=1.05,
     FarAimS=0.35, FarAimFastJump=0.7,
     LeaveTpDist=50, LeaveTpDelay=0.5,
+
     FogColor=Color3.fromRGB(180,180,190),
     FogStart=0, FogEnd=250,
+
     AutoShotRange=200,
     AutoShotDelay=0.01,
     AutoShotFOV=30,
     AutoShotPredict=1.0,
+
     ParticleColor=Color3.fromRGB(255,100,200),
     ParticleSize=1.0,
     ParticleLifetime=1.5,
+
     MotionBlurStrength=12,
     SaturationValue=1.5
 }
 _G.PromtMZ.S = S
 
--- DESCRIPTIONS
 local DESCRIPTIONS = {
     KillAura = "Автоматически бьёт ближайшего игрока",
     Aimbot = "Наводит прицел на ближайшего игрока",
     FarAim = "Наводит прицел на дальних игроков",
     AutoShot = "Стреляет, пока прицел на голове",
     Reach = "Увеличивает дистанцию удара",
-    SpinBot = "Вращает персонажа вокруг оси",
+    Spin = "Вращает персонажа вокруг оси",
     Magnet = "Притягивает к ближайшему игроку",
     TP = "Телепорт к ближайшему игроку",
+    Fling = "Раскидывает игроков вокруг тебя",
     Speed = "Увеличивает скорость",
     Fly = "Позволяет летать",
     Jump = "Увеличивает высоту прыжка",
     Noclip = "Проходишь сквозь блоки",
-    BunnyHop = "Авто-прыжки с ускорением",
+    BHop = "Авто-прыжки с ускорением",
     LeaveTp = "Телепорт рывками",
     Fog = "Атмосферный туман",
     Fullbright = "Максимальная яркость",
@@ -74,7 +79,6 @@ local DESCRIPTIONS = {
     AutoClick = "Авто-клики ЛКМ",
 }
 
--- COLORS
 local C = {
     Purple = Color3.fromRGB(145, 55, 255),
     BrightPurple = Color3.fromRGB(210, 120, 255),
@@ -124,7 +128,6 @@ local function stroke(obj, color, transparency, thickness)
     return s
 end
 
--- BLUR
 local Blur = Lighting:FindFirstChild("PromtMZ_Blur")
 if not Blur then
     Blur = Instance.new("BlurEffect")
@@ -133,7 +136,6 @@ if not Blur then
     Blur.Parent = Lighting
 end
 
--- GUI
 local Gui = Instance.new("ScreenGui")
 Gui.Name = "PromtMZ"
 Gui.ResetOnSpawn = false
@@ -141,7 +143,6 @@ Gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 Gui.IgnoreGuiInset = true
 pcall(function() Gui.Parent = game.CoreGui end)
 
--- SHADOW
 local Shadow = Instance.new("Frame")
 Shadow.Name = "Shadow"
 Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -155,7 +156,6 @@ Shadow.ZIndex = 1
 Shadow.Parent = Gui
 corner(Shadow, 20)
 
--- MAIN
 local FinalPosition = UDim2.new(0.5, 0, 0.5, 0)
 local Main = Instance.new("Frame")
 Main.Name = "Main"
@@ -177,7 +177,6 @@ MainStroke.Thickness = 1
 MainStroke.Transparency = 0.4
 MainStroke.Parent = Main
 
--- GRADIENT
 local Gradient = Instance.new("UIGradient")
 Gradient.Color = ColorSequence.new({
     ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 4, 10)),
@@ -187,7 +186,6 @@ Gradient.Color = ColorSequence.new({
 Gradient.Rotation = 35
 Gradient.Parent = Main
 
--- GLOW 1
 local Glow1 = Instance.new("Frame")
 Glow1.Size = UDim2.fromOffset(270, 270)
 Glow1.Position = UDim2.new(0.78, -135, 0.3, -135)
@@ -198,7 +196,6 @@ Glow1.ZIndex = 3
 Glow1.Parent = Main
 corner(Glow1, 999)
 
--- GLOW 2
 local Glow2 = Instance.new("Frame")
 Glow2.Size = UDim2.fromOffset(210, 210)
 Glow2.Position = UDim2.new(0.12, -105, 0.82, -105)
@@ -209,7 +206,6 @@ Glow2.ZIndex = 3
 Glow2.Parent = Main
 corner(Glow2, 999)
 
--- HEADER
 local Header = Instance.new("TextLabel")
 Header.Name = "Header"
 Header.Size = UDim2.new(1, -35, 0, 40)
@@ -235,7 +231,6 @@ SubHeader.TextXAlignment = Enum.TextXAlignment.Left
 SubHeader.ZIndex = 30
 SubHeader.Parent = Main
 
--- ENERGY LINE
 local EnergyLine = Instance.new("Frame")
 EnergyLine.Size = UDim2.fromOffset(130, 2)
 EnergyLine.Position = UDim2.fromOffset(-150, 59)
@@ -252,7 +247,6 @@ EnergyGradient.Transparency = NumberSequence.new({
 })
 EnergyGradient.Parent = EnergyLine
 
--- TOOLTIP
 local Tooltip = Instance.new("TextLabel")
 Tooltip.Size = UDim2.new(0, 400, 0, 32)
 Tooltip.Position = UDim2.new(0.5, -200, 0, -42)
@@ -282,7 +276,6 @@ local function hideTooltip()
     Tooltip.Visible = false
 end
 
--- CONTENT
 local Content = Instance.new("Frame")
 Content.Size = UDim2.new(1, -28, 1, -82)
 Content.Position = UDim2.fromOffset(14, 72)
@@ -350,7 +343,6 @@ local ColM, CardM = makeCol("MOVEMENT", 171)
 local ColR, CardR = makeCol("RENDER", 342)
 local ColX, CardX = makeCol("MISC", 513)
 
--- PANEL
 local Panel = Instance.new("Frame")
 Panel.Name = "SettingsPanel"
 Panel.Size = UDim2.new(0, 280, 0, 390)
@@ -540,7 +532,6 @@ local function openSettings(name, key)
     tween(Panel, T.Smooth, { Position = UDim2.new(1, -260, 0, 72) })
 end
 
--- BUTTON
 local function makeBtn(parent, name, key)
     local B = Instance.new("TextButton")
     B.Name = key
@@ -631,7 +622,6 @@ local function makeBtn(parent, name, key)
     end)
 end
 
--- BUTTONS
 makeBtn(ColC, "KillAura", "KillAura")
 makeBtn(ColC, "Aimbot", "Aimbot")
 makeBtn(ColC, "Far Aimbot", "FarAim")
@@ -640,6 +630,7 @@ makeBtn(ColC, "Reach", "Reach")
 makeBtn(ColC, "SpinBot", "Spin")
 makeBtn(ColC, "Magnet", "Magnet")
 makeBtn(ColC, "TP", "TP")
+makeBtn(ColC, "Fling", "Fling")
 
 makeBtn(ColM, "Speed", "Speed")
 makeBtn(ColM, "Fly", "Fly")
@@ -1106,4 +1097,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console + Tooltips + Saturation)")
+print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен (Fling + Chams + TargetHUD + Music + Console)")

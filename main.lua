@@ -19,29 +19,23 @@ local S = _G.PromtMZ.S or {
     AspectRatio=false, MotionBlur=false, Optimization=false,
     Console=false, Saturation=false,
     AntiAFK=false, AutoClick=false,
-
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
     SpinV=100, MagR=30, MagS=5, AimS=0.15,
     FarR=500, BHopB=1.05,
     FarAimS=0.35, FarAimFastJump=0.7,
     LeaveTpDist=50, LeaveTpDelay=0.5,
-
     FogColor=Color3.fromRGB(180,180,190),
     FogStart=0, FogEnd=250,
-
     AutoShotRange=200,
     AutoShotDelay=0.01,
     AutoShotFOV=30,
     AutoShotPredict=1.0,
-
     ParticleColor=Color3.fromRGB(255,100,200),
     ParticleSize=1.0,
     ParticleLifetime=1.5,
-
     MotionBlurStrength=12,
     SaturationValue=1.5
 }
-
 _G.PromtMZ.S = S
 
 -- DESCRIPTIONS
@@ -83,13 +77,10 @@ local DESCRIPTIONS = {
 -- COLORS
 local C = {
     Purple = Color3.fromRGB(145, 55, 255),
-    BrightPurple = Color3.fromRGB(205, 115, 255),
-    SoftPurple = Color3.fromRGB(115, 40, 190),
-
-    Background = Color3.fromRGB(8, 6, 12),
-    Panel = Color3.fromRGB(13, 9, 19),
-    Card = Color3.fromRGB(20, 14, 28),
-
+    BrightPurple = Color3.fromRGB(210, 120, 255),
+    SoftPurple = Color3.fromRGB(100, 35, 170),
+    Background = Color3.fromRGB(7, 5, 11),
+    Card = Color3.fromRGB(18, 12, 27),
     Text = Color3.fromRGB(245, 240, 255),
     SubText = Color3.fromRGB(145, 130, 165),
 }
@@ -97,20 +88,18 @@ local C = {
 local CONFIG = {
     Width = 700,
     Height = 460,
-    Position = UDim2.new(0.5, -350, 0.5, -230),
-    ParticleCount = 30,
-    PlasmaCount = 8,
-    AnimationSpeed = 0.35,
-    MouseParallax = 2.5,
+    ParticleCount = 26,
+    PlasmaCount = 7,
+    AnimationSpeed = 0.32,
+    ParallaxStrength = 2,
 }
 
 local T = {
     Fast = TweenInfo.new(0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Soft = TweenInfo.new(0.2, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-    Smooth = TweenInfo.new(0.3, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-    Open = TweenInfo.new(0.6, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
-    Close = TweenInfo.new(0.25, Enum.EasingStyle.Quint, Enum.EasingDirection.In),
-    Press = TweenInfo.new(0.07, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    Soft = TweenInfo.new(0.32, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Smooth = TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Open = TweenInfo.new(1.15, Enum.EasingStyle.Quint, Enum.EasingDirection.Out),
+    Close = TweenInfo.new(0.75, Enum.EasingStyle.Quint, Enum.EasingDirection.In),
 }
 
 local function tween(obj, info, props)
@@ -155,23 +144,26 @@ pcall(function() Gui.Parent = game.CoreGui end)
 -- SHADOW
 local Shadow = Instance.new("Frame")
 Shadow.Name = "Shadow"
-Shadow.Size = UDim2.fromOffset(CONFIG.Width + 18, CONFIG.Height + 18)
-Shadow.Position = CONFIG.Position + UDim2.fromOffset(9, 11)
+Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+Shadow.Size = UDim2.fromOffset(CONFIG.Width + 20, CONFIG.Height + 20)
+Shadow.Position = UDim2.new(0.5, 9, 1.08, 10)
 Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.BackgroundTransparency = 0.3
+Shadow.BackgroundTransparency = 0.5
 Shadow.BorderSizePixel = 0
 Shadow.Visible = false
 Shadow.ZIndex = 1
 Shadow.Parent = Gui
-corner(Shadow, 19)
+corner(Shadow, 20)
 
 -- MAIN
+local FinalPosition = UDim2.new(0.5, 0, 0.5, 0)
 local Main = Instance.new("Frame")
 Main.Name = "Main"
-Main.Size = UDim2.fromOffset(CONFIG.Width, CONFIG.Height)
-Main.Position = CONFIG.Position + UDim2.fromOffset(0, 22)
+Main.AnchorPoint = Vector2.new(0.5, 0.5)
+Main.Size = UDim2.fromOffset(145, 50)
+Main.Position = UDim2.new(0.5, 0, 1.08, 0)
 Main.BackgroundColor3 = C.Background
-Main.BackgroundTransparency = 1
+Main.BackgroundTransparency = 0.15
 Main.BorderSizePixel = 0
 Main.ClipsDescendants = true
 Main.Visible = false
@@ -182,44 +174,45 @@ corner(Main, 17)
 local MainStroke = Instance.new("UIStroke")
 MainStroke.Color = C.Purple
 MainStroke.Thickness = 1
-MainStroke.Transparency = 0.42
+MainStroke.Transparency = 0.4
 MainStroke.Parent = Main
 
 -- GRADIENT
 local Gradient = Instance.new("UIGradient")
 Gradient.Color = ColorSequence.new({
-    ColorSequenceKeypoint.new(0, Color3.fromRGB(7, 5, 11)),
-    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(18, 9, 28)),
-    ColorSequenceKeypoint.new(1, Color3.fromRGB(7, 5, 11)),
+    ColorSequenceKeypoint.new(0, Color3.fromRGB(6, 4, 10)),
+    ColorSequenceKeypoint.new(0.5, Color3.fromRGB(19, 9, 30)),
+    ColorSequenceKeypoint.new(1, Color3.fromRGB(6, 4, 10)),
 })
 Gradient.Rotation = 35
 Gradient.Parent = Main
 
--- GLOWS
-local PlasmaGlow = Instance.new("Frame")
-PlasmaGlow.Size = UDim2.fromOffset(270, 270)
-PlasmaGlow.Position = UDim2.new(0.78, -135, 0.32, -135)
-PlasmaGlow.BackgroundColor3 = C.Purple
-PlasmaGlow.BackgroundTransparency = 0.92
-PlasmaGlow.BorderSizePixel = 0
-PlasmaGlow.ZIndex = 3
-PlasmaGlow.Parent = Main
-corner(PlasmaGlow, 999)
+-- GLOW 1
+local Glow1 = Instance.new("Frame")
+Glow1.Size = UDim2.fromOffset(270, 270)
+Glow1.Position = UDim2.new(0.78, -135, 0.3, -135)
+Glow1.BackgroundColor3 = C.Purple
+Glow1.BackgroundTransparency = 0.92
+Glow1.BorderSizePixel = 0
+Glow1.ZIndex = 3
+Glow1.Parent = Main
+corner(Glow1, 999)
 
-local PlasmaGlow2 = Instance.new("Frame")
-PlasmaGlow2.Size = UDim2.fromOffset(210, 210)
-PlasmaGlow2.Position = UDim2.new(0.12, -105, 0.82, -105)
-PlasmaGlow2.BackgroundColor3 = C.BrightPurple
-PlasmaGlow2.BackgroundTransparency = 0.94
-PlasmaGlow2.BorderSizePixel = 0
-PlasmaGlow2.ZIndex = 3
-PlasmaGlow2.Parent = Main
-corner(PlasmaGlow2, 999)
+-- GLOW 2
+local Glow2 = Instance.new("Frame")
+Glow2.Size = UDim2.fromOffset(210, 210)
+Glow2.Position = UDim2.new(0.12, -105, 0.82, -105)
+Glow2.BackgroundColor3 = C.BrightPurple
+Glow2.BackgroundTransparency = 0.95
+Glow2.BorderSizePixel = 0
+Glow2.ZIndex = 3
+Glow2.Parent = Main
+corner(Glow2, 999)
 
 -- HEADER
 local Header = Instance.new("TextLabel")
 Header.Name = "Header"
-Header.Size = UDim2.new(1, -35, 0, 42)
+Header.Size = UDim2.new(1, -35, 0, 40)
 Header.Position = UDim2.fromOffset(18, 8)
 Header.BackgroundTransparency = 1
 Header.Text = "PURPLE // CONTROL"
@@ -234,7 +227,7 @@ local SubHeader = Instance.new("TextLabel")
 SubHeader.Size = UDim2.new(1, -35, 0, 18)
 SubHeader.Position = UDim2.fromOffset(19, 37)
 SubHeader.BackgroundTransparency = 1
-SubHeader.Text = "ADVANCED VISUAL INTERFACE"
+SubHeader.Text = "ULTRA SMOOTH INTERFACE"
 SubHeader.Font = Enum.Font.Gotham
 SubHeader.TextSize = 9
 SubHeader.TextColor3 = C.SubText
@@ -262,8 +255,8 @@ EnergyGradient.Parent = EnergyLine
 -- TOOLTIP
 local Tooltip = Instance.new("TextLabel")
 Tooltip.Size = UDim2.new(0, 400, 0, 32)
-Tooltip.Position = UDim2.new(0.5, -200, 0, -45)
-Tooltip.BackgroundColor3 = C.Panel
+Tooltip.Position = UDim2.new(0.5, -200, 0, -42)
+Tooltip.BackgroundColor3 = C.Card
 Tooltip.BackgroundTransparency = 0.05
 Tooltip.BorderSizePixel = 0
 Tooltip.Text = ""
@@ -289,7 +282,7 @@ local function hideTooltip()
     Tooltip.Visible = false
 end
 
--- CONTENT (4 columns)
+-- CONTENT
 local Content = Instance.new("Frame")
 Content.Size = UDim2.new(1, -28, 1, -82)
 Content.Position = UDim2.fromOffset(14, 72)
@@ -308,7 +301,7 @@ local function makeCol(name, x)
     Card.ZIndex = 20
     Card.Parent = Content
     corner(Card, 12)
-    local Border = stroke(Card, C.Purple, 0.72, 1)
+    stroke(Card, C.Purple, 0.72, 1)
 
     local Heading = Instance.new("TextLabel")
     Heading.Size = UDim2.new(1, -24, 0, 26)
@@ -362,7 +355,7 @@ local Panel = Instance.new("Frame")
 Panel.Name = "SettingsPanel"
 Panel.Size = UDim2.new(0, 280, 0, 390)
 Panel.Position = UDim2.new(1, 15, 0, 72)
-Panel.BackgroundColor3 = C.Panel
+Panel.BackgroundColor3 = C.Card
 Panel.BorderSizePixel = 0
 Panel.Visible = false
 Panel.ZIndex = 50
@@ -372,7 +365,7 @@ stroke(Panel, C.Purple, 0.4, 1)
 
 local PanelHeader = Instance.new("Frame")
 PanelHeader.Size = UDim2.new(1, 0, 0, 46)
-PanelHeader.BackgroundColor3 = C.Card
+PanelHeader.BackgroundColor3 = Color3.fromRGB(25, 17, 36)
 PanelHeader.BorderSizePixel = 0
 PanelHeader.ZIndex = 51
 PanelHeader.Parent = Panel
@@ -406,7 +399,6 @@ local PanelLayout = Instance.new("UIListLayout")
 PanelLayout.Padding = UDim.new(0, 9)
 PanelLayout.Parent = PanelScroll
 
--- SLIDER
 local function makeSlider(parent, label, minV, maxV, currentV, callback)
     local Container = Instance.new("Frame")
     Container.Size = UDim2.new(1, 0, 0, 53)
@@ -428,7 +420,7 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     local Bg = Instance.new("Frame")
     Bg.Size = UDim2.new(1, 0, 0, 8)
     Bg.Position = UDim2.fromOffset(0, 28)
-    Bg.BackgroundColor3 = C.Card
+    Bg.BackgroundColor3 = C.Background
     Bg.BorderSizePixel = 0
     Bg.ZIndex = 56
     Bg.Parent = Container
@@ -453,7 +445,6 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     corner(Knob, 20)
 
     local dragging = false
-
     local function update(input)
         local rel = math.clamp((input.Position.X - Bg.AbsolutePosition.X) / Bg.AbsoluteSize.X, 0, 1)
         tween(Fill, T.Fast, { Size = UDim2.new(rel, 0, 1, 0) })
@@ -481,7 +472,6 @@ local function makeSlider(parent, label, minV, maxV, currentV, callback)
     end)
 end
 
--- SETTINGS
 local currentOpen = nil
 
 local function clearPanel()
@@ -560,7 +550,6 @@ local function makeBtn(parent, name, key)
     B.BorderSizePixel = 0
     B.Text = ""
     B.AutoButtonColor = false
-    B.Active = true
     B.ClipsDescendants = true
     B.ZIndex = 25
     B.Parent = parent
@@ -586,7 +575,7 @@ local function makeBtn(parent, name, key)
     Label.TextSize = 11
     Label.Font = Enum.Font.GothamMedium
     Label.TextXAlignment = Enum.TextXAlignment.Left
-    Label.ZIndex = 27
+    Label.ZIndex = 29
     Label.Parent = B
 
     local Indicator = Instance.new("Frame")
@@ -595,13 +584,13 @@ local function makeBtn(parent, name, key)
     Indicator.BackgroundColor3 = S[key] == true and C.BrightPurple or C.SoftPurple
     Indicator.BackgroundTransparency = S[key] == true and 0 or 0.5
     Indicator.BorderSizePixel = 0
-    Indicator.ZIndex = 28
+    Indicator.ZIndex = 29
     Indicator.Parent = B
     corner(Indicator, 8)
 
     B.MouseEnter:Connect(function()
-        tween(B, T.Soft, { BackgroundColor3 = Color3.fromRGB(31, 19, 45) })
-        tween(Border, T.Soft, { Transparency = 0.35 })
+        tween(B, T.Soft, { BackgroundColor3 = Color3.fromRGB(31, 18, 46) })
+        tween(Border, T.Soft, { Transparency = 0.28 })
         tween(Side, T.Soft, { Size = UDim2.fromOffset(3, 28) })
         showTooltip(DESCRIPTIONS[key] or name)
     end)
@@ -617,22 +606,22 @@ local function makeBtn(parent, name, key)
         S[key] = not S[key]
         local active = S[key] == true
 
-        tween(B, T.Soft, { BackgroundColor3 = active and Color3.fromRGB(31, 19, 45) or C.Card })
+        tween(B, T.Soft, { BackgroundColor3 = active and Color3.fromRGB(31, 18, 46) or C.Card })
         tween(Label, T.Soft, { TextColor3 = active and C.BrightPurple or C.Text })
         tween(Indicator, T.Soft, { BackgroundColor3 = active and C.BrightPurple or C.SoftPurple, BackgroundTransparency = active and 0 or 0.5 })
 
         local flash = Instance.new("Frame")
         flash.Size = UDim2.fromScale(0, 1)
-        flash.BackgroundColor3 = C.Purple
-        flash.BackgroundTransparency = 0.72
+        flash.BackgroundColor3 = C.BrightPurple
+        flash.BackgroundTransparency = 0.7
         flash.BorderSizePixel = 0
-        flash.ZIndex = 26
+        flash.ZIndex = 27
         flash.Parent = B
-        tween(flash, TweenInfo.new(0.55, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
+        tween(flash, TweenInfo.new(0.65, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), {
             Size = UDim2.fromScale(1, 1),
             BackgroundTransparency = 1
         })
-        Debris:AddItem(flash, 0.6)
+        Debris:AddItem(flash, 0.7)
 
         print("[PromtMZ]", name, "=", tostring(S[key]))
     end)
@@ -683,7 +672,6 @@ makeBtn(ColX, "Console", "Console")
 local ConsoleGui = Instance.new("ScreenGui")
 ConsoleGui.Name = "PromtMZ_Console"
 ConsoleGui.ResetOnSpawn = false
-ConsoleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 pcall(function() ConsoleGui.Parent = game.CoreGui end)
 
 local ConsoleFrame = Instance.new("Frame")
@@ -830,12 +818,8 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- SMOOTH ANIMATION
-local smoothTime = 0
-local currentMouseX, currentMouseY = 0, 0
-local targetMouseX, targetMouseY = 0, 0
-
-local function smoothVal(current, target, speed, dt)
+-- SMOOTH MATH
+local function SmoothVal(current, target, speed, dt)
     local alpha = 1 - math.exp(-speed * dt)
     return current + (target - current) * alpha
 end
@@ -855,7 +839,7 @@ for i = 1, CONFIG.ParticleCount do
     corner(p, 999)
     table.insert(Particles, {
         Object = p,
-        Speed = math.random(5, 16) / 100,
+        Speed = math.random(5, 15) / 100,
         Offset = math.random(),
         Direction = math.random(0, 1) == 0 and -1 or 1,
     })
@@ -877,67 +861,74 @@ for i = 1, CONFIG.PlasmaCount do
     table.insert(Orbs, {
         Object = o,
         Angle = math.random() * math.pi * 2,
-        Radius = math.random(45, 145),
+        Radius = math.random(45, 140),
         Speed = math.random(15, 35) / 100,
         CenterX = math.random(25, 75) / 100,
         CenterY = math.random(25, 75) / 100,
     })
 end
 
+-- MAIN ANIMATION
+local Time = 0
+local MouseX, MouseY = 0, 0
+local TargetMouseX, TargetMouseY = 0, 0
+
 RunService.RenderStepped:Connect(function(dt)
     dt = math.clamp(dt, 0, 1 / 30)
-    smoothTime += dt * CONFIG.AnimationSpeed
+    Time += dt * CONFIG.AnimationSpeed
 
-    local mouse = UIS:GetMouseLocation()
-    local screen = workspace.CurrentCamera and workspace.CurrentCamera.ViewportSize
-    if screen then
-        targetMouseX = (mouse.X / screen.X - 0.5) * CONFIG.MouseParallax
-        targetMouseY = (mouse.Y / screen.Y - 0.5) * CONFIG.MouseParallax
+    local Camera = workspace.CurrentCamera
+    if Camera then
+        local Mouse = UIS:GetMouseLocation()
+        local Viewport = Camera.ViewportSize
+        TargetMouseX = (Mouse.X / Viewport.X - 0.5) * CONFIG.ParallaxStrength
+        TargetMouseY = (Mouse.Y / Viewport.Y - 0.5) * CONFIG.ParallaxStrength
     end
-    currentMouseX = smoothVal(currentMouseX, targetMouseX, 2, dt)
-    currentMouseY = smoothVal(currentMouseY, targetMouseY, 2, dt)
+    MouseX = SmoothVal(MouseX, TargetMouseX, 2, dt)
+    MouseY = SmoothVal(MouseY, TargetMouseY, 2, dt)
+
+    Glow1.Position = UDim2.new(0.78 + MouseX * 0.012, -135, 0.3 + MouseY * 0.012, -135)
+    Glow2.Position = UDim2.new(0.12 - MouseX * 0.009, -105, 0.82 - MouseY * 0.009, -105)
 
     for _, data in ipairs(Particles) do
         local obj = data.Object
-        if obj and obj.Parent then
+        if obj.Parent then
             local x = obj.Position.X.Scale
             local y = obj.Position.Y.Scale
             local targetX = x + data.Direction * data.Speed * dt * 0.035
-            local wave = math.sin(smoothTime * 1.1 + data.Offset * 10) * 0.00018
+            local wave = math.sin(Time * 1.1 + data.Offset * 10) * 0.00018
             local targetY = y + wave
             if targetX > 1.05 then targetX = -0.05 end
             if targetX < -0.05 then targetX = 1.05 end
-            obj.Position = UDim2.new(smoothVal(x, targetX, 2.2, dt), 0, smoothVal(y, targetY, 2.2, dt), 0)
+            obj.Position = UDim2.new(SmoothVal(x, targetX, 2.2, dt), 0, SmoothVal(y, targetY, 2.2, dt), 0)
         end
     end
 
     for _, data in ipairs(Orbs) do
         local obj = data.Object
-        if obj and obj.Parent then
+        if obj.Parent then
             data.Angle += data.Speed * dt * CONFIG.AnimationSpeed
             local targetX = data.CenterX + math.cos(data.Angle) * (data.Radius / CONFIG.Width)
             local targetY = data.CenterY + math.sin(data.Angle * 1.15) * (data.Radius / CONFIG.Height)
             local x = obj.Position.X.Scale
             local y = obj.Position.Y.Scale
-            obj.Position = UDim2.fromScale(smoothVal(x, targetX, 2, dt), smoothVal(y, targetY, 2, dt))
-            local pulse = (math.sin(smoothTime * 1.4 + data.Angle) + 1) * 0.5
-            obj.BackgroundTransparency = smoothVal(obj.BackgroundTransparency, 0.25 + pulse * 0.45, 1.5, dt)
+            obj.Position = UDim2.fromScale(SmoothVal(x, targetX, 2, dt), SmoothVal(y, targetY, 2, dt))
+            local pulse = (math.sin(Time * 1.35 + data.Angle) + 1) * 0.5
+            obj.BackgroundTransparency = SmoothVal(obj.BackgroundTransparency, 0.25 + pulse * 0.45, 1.4, dt)
         end
     end
 
-    PlasmaGlow.Position = UDim2.new(0.78 + currentMouseX * 0.018, -135, 0.32 + currentMouseY * 0.018, -135)
-    PlasmaGlow2.Position = UDim2.new(0.12 + currentMouseX * -0.012, -105, 0.82 + currentMouseY * -0.012, -105)
+    Gradient.Rotation = SmoothVal(Gradient.Rotation, 35 + math.sin(Time * 0.18) * 18, 1, dt)
 
-    Gradient.Rotation = smoothVal(Gradient.Rotation, 35 + math.sin(smoothTime * 0.18) * 18, 1, dt)
+    local GlowPulse = (math.sin(Time * 0.7) + 1) * 0.5
+    Glow1.BackgroundTransparency = SmoothVal(Glow1.BackgroundTransparency, 0.91 - GlowPulse * 0.055, 1.5, dt)
+    Glow2.BackgroundTransparency = SmoothVal(Glow2.BackgroundTransparency, 0.94 - GlowPulse * 0.035, 1.3, dt)
 
-    local glowWave = (math.sin(smoothTime * 0.7) + 1) * 0.5
-    PlasmaGlow.BackgroundTransparency = smoothVal(PlasmaGlow.BackgroundTransparency, 0.91 - glowWave * 0.055, 1.5, dt)
-    PlasmaGlow2.BackgroundTransparency = smoothVal(PlasmaGlow2.BackgroundTransparency, 0.94 - glowWave * 0.035, 1.3, dt)
+    local BorderPulse = (math.sin(Time * 0.55) + 1) * 0.5
+    MainStroke.Transparency = SmoothVal(MainStroke.Transparency, 0.27 + BorderPulse * 0.28, 1.3, dt)
 
-    MainStroke.Transparency = smoothVal(MainStroke.Transparency, 0.27 + ((math.sin(smoothTime * 0.55) + 1) * 0.5) * 0.28, 1.3, dt)
-
-    local lineTarget = (smoothTime * 45 % (CONFIG.Width + 280)) - 280
-    EnergyLine.Position = UDim2.fromOffset(smoothVal(EnergyLine.Position.X.Offset, lineTarget, 2.2, dt), 59)
+    local TargetLine = (Time * 45 % (CONFIG.Width + 280)) - 280
+    EnergyLine.Position = UDim2.fromOffset(SmoothVal(EnergyLine.Position.X.Offset, TargetLine, 2.2, dt), 59)
 end)
 
 -- OPEN / CLOSE
@@ -950,13 +941,24 @@ local function open()
     Main.Visible = true
     Shadow.Visible = true
 
-    Main.Position = CONFIG.Position + UDim2.fromOffset(0, 22)
-    Main.BackgroundTransparency = 1
-    Shadow.BackgroundTransparency = 1
+    Main.Position = UDim2.new(0.5, 0, 1.08, 0)
+    Main.Size = UDim2.fromOffset(145, 50)
+    Main.BackgroundTransparency = 0.15
+    Shadow.Position = UDim2.new(0.5, 9, 1.08, 10)
+    Shadow.Size = UDim2.fromOffset(165, 60)
+    Shadow.BackgroundTransparency = 0.55
 
-    tween(Main, T.Open, { Position = CONFIG.Position, BackgroundTransparency = 0 })
-    tween(Shadow, T.Open, { BackgroundTransparency = 0.3 })
-    tween(Blur, T.Smooth, { Size = 18 })
+    tween(Main, T.Open, {
+        Position = FinalPosition,
+        Size = UDim2.fromOffset(CONFIG.Width, CONFIG.Height),
+        BackgroundTransparency = 0
+    })
+    tween(Shadow, T.Open, {
+        Position = FinalPosition + UDim2.fromOffset(9, 10),
+        Size = UDim2.fromOffset(CONFIG.Width + 20, CONFIG.Height + 20),
+        BackgroundTransparency = 0.3
+    })
+    tween(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = 18 })
 end
 
 local function close()
@@ -966,11 +968,19 @@ local function close()
     Panel.Visible = false
     hideTooltip()
 
-    tween(Main, T.Close, { Position = CONFIG.Position + UDim2.fromOffset(0, 22), BackgroundTransparency = 1 })
-    tween(Shadow, T.Close, { BackgroundTransparency = 1 })
-    tween(Blur, T.Smooth, { Size = 0 })
+    tween(Main, T.Close, {
+        Position = UDim2.new(0.5, 0, 1.08, 0),
+        Size = UDim2.fromOffset(145, 50),
+        BackgroundTransparency = 0.15
+    })
+    tween(Shadow, T.Close, {
+        Position = UDim2.new(0.5, 9, 1.08, 10),
+        Size = UDim2.fromOffset(165, 60),
+        BackgroundTransparency = 0.55
+    })
+    tween(Blur, TweenInfo.new(0.5, Enum.EasingStyle.Quint), { Size = 0 })
 
-    task.delay(0.28, function()
+    task.delay(0.8, function()
         if not opened then
             Main.Visible = false
             Shadow.Visible = false
@@ -979,86 +989,50 @@ local function close()
 end
 
 -- DRAG
-local dragging = false
-local dragStart
-local startPos
-local velocity = Vector2.zero
-local lastMousePos
-local lastTime = os.clock()
-local inertiaConnection
+local Dragging = false
+local DragStart
+local StartPosition
+local DragTarget = Vector2.zero
+local DragCurrent = Vector2.zero
 
-local function setWindowPosition(pos)
-    Main.Position = pos
-    Shadow.Position = UDim2.new(pos.X.Scale, pos.X.Offset + 9, pos.Y.Scale, pos.Y.Offset + 11)
-end
+Header.InputBegan:Connect(function(Input)
+    if Input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
+    Dragging = true
+    DragStart = Input.Position
+    StartPosition = Main.Position
+    DragTarget = Vector2.zero
+end)
 
-local function startInertia()
-    if inertiaConnection then
-        inertiaConnection:Disconnect()
-        inertiaConnection = nil
-    end
-    local last = os.clock()
-    inertiaConnection = RunService.RenderStepped:Connect(function()
-        if dragging then return end
-        local now = os.clock()
-        local dt = math.clamp(now - last, 0, 0.05)
-        last = now
-        if velocity.Magnitude > 2 then
-            local current = Main.Position
-            local nextX = current.X.Offset + velocity.X * dt
-            local nextY = current.Y.Offset + velocity.Y * dt
-            setWindowPosition(UDim2.new(current.X.Scale, nextX, current.Y.Scale, nextY))
-            velocity *= math.pow(0.055, dt)
-        else
-            velocity = Vector2.zero
-            if inertiaConnection then
-                inertiaConnection:Disconnect()
-                inertiaConnection = nil
-            end
-        end
-    end)
-end
+UIS.InputChanged:Connect(function(Input)
+    if not Dragging then return end
+    if Input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
+    local Delta = Input.Position - DragStart
+    DragTarget = Vector2.new(Delta.X, Delta.Y)
+end)
 
-Header.InputBegan:Connect(function(input)
-    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-    dragging = true
-    dragStart = input.Position
-    startPos = Main.Position
-    lastMousePos = input.Position
-    lastTime = os.clock()
-    velocity = Vector2.zero
-    if inertiaConnection then
-        inertiaConnection:Disconnect()
-        inertiaConnection = nil
+UIS.InputEnded:Connect(function(Input)
+    if Input.UserInputType == Enum.UserInputType.MouseButton1 then
+        Dragging = false
+        DragTarget = Vector2.zero
     end
 end)
 
-UIS.InputChanged:Connect(function(input)
-    if not dragging then return end
-    if input.UserInputType ~= Enum.UserInputType.MouseMovement then return end
-    local now = os.clock()
-    local dt = math.max(now - lastTime, 0.001)
-    local mousePos = input.Position
-    local delta = mousePos - dragStart
-    setWindowPosition(UDim2.new(
-        startPos.X.Scale, startPos.X.Offset + delta.X,
-        startPos.Y.Scale, startPos.Y.Offset + delta.Y
-    ))
-    local currentVelocity = (mousePos - lastMousePos) / dt
-    velocity = velocity:Lerp(Vector2.new(
-        math.clamp(currentVelocity.X, -2500, 2500),
-        math.clamp(currentVelocity.Y, -2500, 2500)
-    ), 0.35)
-    lastMousePos = mousePos
-    lastTime = now
-end)
-
-UIS.InputEnded:Connect(function(input)
-    if input.UserInputType ~= Enum.UserInputType.MouseButton1 then return end
-    if not dragging then return end
-    dragging = false
-    velocity *= 0.72
-    startInertia()
+RunService.RenderStepped:Connect(function(dt)
+    DragCurrent = DragCurrent:Lerp(DragTarget, 1 - math.exp(-12 * dt))
+    if Dragging then
+        Main.Position = UDim2.new(
+            StartPosition.X.Scale,
+            StartPosition.X.Offset + DragCurrent.X,
+            StartPosition.Y.Scale,
+            StartPosition.Y.Offset + DragCurrent.Y
+        )
+    end
+    Shadow.Position = UDim2.new(
+        Main.Position.X.Scale,
+        Main.Position.X.Offset + 9,
+        Main.Position.Y.Scale,
+        Main.Position.Y.Offset + 10
+    )
 end)
 
 -- HOTKEYS
@@ -1132,4 +1106,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен")
+print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console + Tooltips + Saturation)")

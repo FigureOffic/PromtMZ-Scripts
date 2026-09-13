@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + TargetESP)
+-- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -14,7 +14,7 @@ local S = _G.PromtMZ.S or {
     Speed=false, Fly=false, Jump=false, Noclip=false, BHop=false,
     LeaveTp=false, Fog=true, Fullbright=false, HUD=false,
     ESP=false, Skeleton=false, Box=false, ChinaHat=false,
-    Particles=false, Chams=false, TargetHUD=false, Music=false, TargetESP=false,
+    Particles=false, Chams=false, TargetHUD=false, Music=false,
     AntiAFK=false, AutoClick=false,
 
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
@@ -550,7 +550,6 @@ makeBtn(ColR, "Particles", "Particles")
 makeBtn(ColR, "Chams", "Chams")
 makeBtn(ColR, "TargetHUD", "TargetHUD")
 makeBtn(ColR, "Music", "Music")
-makeBtn(ColR, "Target ESP", "TargetESP")
 
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
@@ -763,4 +762,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + TargetESP)")
+print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music)")

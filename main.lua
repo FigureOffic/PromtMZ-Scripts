@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization + Console)
+-- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console + Tooltips)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -16,7 +16,7 @@ local S = _G.PromtMZ.S or {
     ESP=false, Skeleton=false, Box=false, ChinaHat=false,
     Particles=false, Chams=false, TargetHUD=false, Music=false,
     AspectRatio=false, MotionBlur=false, Optimization=false,
-    Console=false,
+    Console=false, Saturation=false,
     AntiAFK=false, AutoClick=false,
 
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
@@ -37,10 +37,47 @@ local S = _G.PromtMZ.S or {
     ParticleSize=1.0,
     ParticleLifetime=1.5,
 
-    MotionBlurStrength=12
+    MotionBlurStrength=12,
+    SaturationValue=1.5
 }
 
 _G.PromtMZ.S = S
+
+-- Описания функций для подсказок
+local DESCRIPTIONS = {
+    KillAura = "Автоматически бьёт ближайшего игрока в радиусе",
+    Aimbot = "Наводит прицел на ближайшего игрока (сначала без стены)",
+    FarAim = "Наводит прицел на игроков на большой дистанции",
+    AutoShot = "Стреляет, пока прицел наведён на голову цели",
+    Reach = "Увеличивает дистанцию удара",
+    SpinBot = "Вращает персонажа вокруг оси (обход античита)",
+    Magnet = "Притягивает тебя к ближайшему игроку",
+    TP = "Телепортирует к ближайшему игроку",
+    Speed = "Увеличивает скорость передвижения",
+    Fly = "Позволяет летать (WASD + Space/Shift)",
+    Jump = "Увеличивает высоту прыжка",
+    Noclip = "Проходишь сквозь блоки и стены",
+    BunnyHop = "Авто-прыжки с ускорением",
+    LeaveTp = "Телепорт рывками (blink-режим)",
+    Fog = "Атмосферный туман с настройками",
+    Fullbright = "Максимальная яркость (видно ночью)",
+    HUD = "Показывает Watermark и активные функции",
+    ESP = "Ники и HP игроков над головой",
+    Skeleton = "Скелет игрока (линии по костям)",
+    Box = "Рамка вокруг игроков",
+    ChinaHat = "Красная шляпа над головой",
+    Particles = "Круги при прыжке и взрыв при клике",
+    Chams = "Глянцевая заливка игроков (видно сквозь стены)",
+    TargetHUD = "Инфо о цели: аватар, ник, HP",
+    Music = "Music Bar в стиле YouTube Music",
+    AspectRatio = "Соотношение экрана 4:3 (узкий FOV)",
+    MotionBlur = "Размытие при быстром движении камеры",
+    Optimization = "Отключает тяжёлые эффекты для FPS",
+    Console = "Окно консоли для команд",
+    Saturation = "Насыщенность цветов",
+    AntiAFK = "Авто-действия чтобы не кикнуло за АФК",
+    AutoClick = "Авто-клики ЛКМ",
+}
 
 -- COLORS
 local C = {
@@ -93,7 +130,7 @@ local function stroke(obj, color, transparency, thickness)
     return s
 end
 
--- BLUR (для меню)
+-- BLUR
 local Blur = Lighting:FindFirstChild("PromtMZ_Blur")
 if not Blur then
     Blur = Instance.new("BlurEffect")
@@ -184,6 +221,39 @@ Dot.BorderSizePixel = 0
 Dot.ZIndex = 7
 Dot.Parent = Header
 corner(Dot, 10)
+
+-- TOOLTIP (подсказка над меню)
+local Tooltip = Instance.new("TextLabel")
+Tooltip.Size = UDim2.new(0, 400, 0, 32)
+Tooltip.Position = UDim2.new(0.5, -200, 0, -45)
+Tooltip.BackgroundColor3 = C.Cream2
+Tooltip.BackgroundTransparency = 0.05
+Tooltip.BorderSizePixel = 0
+Tooltip.Text = ""
+Tooltip.TextColor3 = C.Text
+Tooltip.TextSize = 12
+Tooltip.Font = Enum.Font.GothamMedium
+Tooltip.TextWrapped = true
+Tooltip.Visible = false
+Tooltip.ZIndex = 20
+Tooltip.Parent = Main
+corner(Tooltip, 10)
+stroke(Tooltip, C.Beige2, 0.35, 1)
+
+local function showTooltip(text)
+    if not text or text == "" then
+        Tooltip.Visible = false
+        return
+    end
+    Tooltip.Text = "  " .. text .. "  "
+    Tooltip.Visible = true
+    Tooltip.Size = UDim2.new(0, math.clamp(#text * 7 + 30, 200, 600), 0, 32)
+    Tooltip.Position = UDim2.new(0.5, -Tooltip.Size.X.Offset / 2, 0, -42)
+end
+
+local function hideTooltip()
+    Tooltip.Visible = false
+end
 
 -- CONTENT
 local Content = Instance.new("Frame")
@@ -437,6 +507,8 @@ local function openSettings(name, key)
         makeSlider(PanelScroll, "Lifetime", 0.5, 5, S.ParticleLifetime, function(v) S.ParticleLifetime = v end)
     elseif name == "Motion Blur" then
         makeSlider(PanelScroll, "Strength", 1, 30, S.MotionBlurStrength, function(v) S.MotionBlurStrength = v end)
+    elseif name == "Saturation" then
+        makeSlider(PanelScroll, "Saturation", 0, 3, S.SaturationValue, function(v) S.SaturationValue = v end)
     else
         local Info = Instance.new("TextLabel")
         Info.Size = UDim2.new(1, 0, 0, 40)
@@ -499,11 +571,13 @@ local function makeBtn(parent, name, key)
         tween(B, T.Soft, { BackgroundColor3 = S[key] and C.On:Lerp(C.White, 0.15) or C.Off:Lerp(C.White, 0.3) })
         tween(B, T.Soft, { Size = UDim2.new(baseSize.X.Scale, baseSize.X.Offset, baseSize.Y.Scale, baseSize.Y.Offset - 1) })
         tween(Border, T.Soft, { Transparency = 0.15 })
+        showTooltip(DESCRIPTIONS[key] or name)
     end)
 
     B.MouseLeave:Connect(function()
         tween(B, T.Soft, { BackgroundColor3 = S[key] and C.On or C.Off, Size = baseSize })
         tween(Border, T.Soft, { Transparency = 0.5 })
+        hideTooltip()
     end)
 
     B.MouseButton1Down:Connect(function()
@@ -559,6 +633,7 @@ makeBtn(ColR, "Music", "Music")
 makeBtn(ColR, "Aspect 4:3", "AspectRatio")
 makeBtn(ColR, "Motion Blur", "MotionBlur")
 makeBtn(ColR, "Optimization", "Optimization")
+makeBtn(ColR, "Saturation", "Saturation")
 
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
@@ -617,6 +692,7 @@ ConsoleClose.Parent = ConsoleHeader
 
 ConsoleClose.MouseButton1Click:Connect(function()
     ConsoleFrame.Visible = false
+    S.Console = false
 end)
 
 local ConsoleOutput = Instance.new("ScrollingFrame")
@@ -667,7 +743,6 @@ local function consolePrint(text, color)
     L.Parent = ConsoleOutput
 end
 
--- API команд
 _G.PromtMZ.Console = {
     print = consolePrint
 }
@@ -677,15 +752,14 @@ ConsoleInput.FocusLost:Connect(function(enterPressed)
     local cmd = ConsoleInput.Text
     if cmd == "" then return end
     ConsoleInput.Text = ""
-    
+
     consolePrint("> " .. cmd, C.Warm)
-    
-    -- Обработка команд
+
     local args = {}
     for word in cmd:gmatch("%S+") do
         table.insert(args, word)
     end
-    
+
     if args[1] == "help" then
         consolePrint("Доступные команды:", C.WarmDark)
         consolePrint("  help — список команд", C.TextSoft)
@@ -721,10 +795,6 @@ ConsoleInput.FocusLost:Connect(function(enterPressed)
     end
 end)
 
--- Открытие Console по кнопке
-local origMakeBtnClick = nil
-
--- Автоматическое открытие при включении Console
 RunService.RenderStepped:Connect(function()
     if S.Console and not ConsoleFrame.Visible then
         ConsoleFrame.Visible = true
@@ -769,6 +839,7 @@ local function close()
     opened = false
     currentOpen = nil
     Panel.Visible = false
+    hideTooltip()
 
     tween(Main, T.Close, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, -10, 0.5, -10) })
     tween(Shadow, T.Close, { Size = UDim2.new(0, 20, 0, 20), Position = UDim2.new(0.5, 0, 0.5, 0), BackgroundTransparency = 1 })
@@ -941,4 +1012,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console)")
+print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + Aspect4:3 + MotionBlur + Optimization + Console + Tooltips + Saturation)")

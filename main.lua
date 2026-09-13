@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music)
+-- main.lua — PromtMZ Cozy Beige UI (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -15,6 +15,7 @@ local S = _G.PromtMZ.S or {
     LeaveTp=false, Fog=true, Fullbright=false, HUD=false,
     ESP=false, Skeleton=false, Box=false, ChinaHat=false,
     Particles=false, Chams=false, TargetHUD=false, Music=false,
+    AspectRatio=false, MotionBlur=false, Optimization=false,
     AntiAFK=false, AutoClick=false,
 
     ReachV=6, SpeedV=20, FlyV=3, JumpV=100,
@@ -33,7 +34,10 @@ local S = _G.PromtMZ.S or {
 
     ParticleColor=Color3.fromRGB(255,100,200),
     ParticleSize=1.0,
-    ParticleLifetime=1.5
+    ParticleLifetime=1.5,
+
+    AspectRatioValue=1.0,
+    MotionBlurStrength=12
 }
 
 _G.PromtMZ.S = S
@@ -89,7 +93,7 @@ local function stroke(obj, color, transparency, thickness)
     return s
 end
 
--- BLUR
+-- BLUR (для меню)
 local Blur = Lighting:FindFirstChild("PromtMZ_Blur")
 if not Blur then
     Blur = Instance.new("BlurEffect")
@@ -431,6 +435,8 @@ local function openSettings(name, key)
     elseif name == "Particles" then
         makeSlider(PanelScroll, "Size", 0.1, 5, S.ParticleSize, function(v) S.ParticleSize = v end)
         makeSlider(PanelScroll, "Lifetime", 0.5, 5, S.ParticleLifetime, function(v) S.ParticleLifetime = v end)
+    elseif name == "Motion Blur" then
+        makeSlider(PanelScroll, "Strength", 1, 30, S.MotionBlurStrength, function(v) S.MotionBlurStrength = v end)
     else
         local Info = Instance.new("TextLabel")
         Info.Size = UDim2.new(1, 0, 0, 40)
@@ -550,6 +556,9 @@ makeBtn(ColR, "Particles", "Particles")
 makeBtn(ColR, "Chams", "Chams")
 makeBtn(ColR, "TargetHUD", "TargetHUD")
 makeBtn(ColR, "Music", "Music")
+makeBtn(ColR, "Aspect Ratio", "AspectRatio")
+makeBtn(ColR, "Motion Blur", "MotionBlur")
+makeBtn(ColR, "Optimization", "Optimization")
 
 makeBtn(ColX, "AntiAFK", "AntiAFK")
 makeBtn(ColX, "AutoClick", "AutoClick")
@@ -762,4 +771,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music)")
+print("[PromtMZ] Cozy Beige UI загружен (Chams + TargetHUD + Music + AspectRatio + MotionBlur + Optimization)")

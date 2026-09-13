@@ -60,6 +60,23 @@ RunService.RenderStepped:Connect(function(dt)
     lastCameraCFrame = current
 end)
 
+-- ================= SATURATION =================
+local Saturation = Lighting:FindFirstChild("PromtMZ_Saturation")
+if not Saturation then
+    Saturation = Instance.new("ColorCorrectionEffect")
+    Saturation.Name = "PromtMZ_Saturation"
+    Saturation.Saturation = 0
+    Saturation.Parent = Lighting
+end
+
+RunService.RenderStepped:Connect(function()
+    if not S.Saturation then
+        Saturation.Saturation = 0
+        return
+    end
+    Saturation.Saturation = (S.SaturationValue or 1.5) - 1
+end)
+
 -- ================= OPTIMIZATION =================
 local OptimizationConfig = {
     UpdateRate = 30,
@@ -83,7 +100,7 @@ local function optimizeInstance(obj)
     end
     if OptimizationConfig.DisablePostEffects then
         if obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") then
-            if obj.Name ~= "PromtMZ_MotionBlur" and obj.Name ~= "PromtMZ_Blur" then
+            if obj.Name ~= "PromtMZ_MotionBlur" and obj.Name ~= "PromtMZ_Blur" and obj.Name ~= "PromtMZ_Saturation" then
                 obj.Enabled = false
             end
         end
@@ -792,4 +809,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + aspect4:3 + motionblur + optimization)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + aspect4:3 + motionblur + saturation + optimization)")

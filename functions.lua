@@ -17,10 +17,7 @@ local function getTargets()
     local targets = {}
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character then
-            -- ⛔ Пропускаем, если есть ForceField (защита после спавна)
-            if p.Character:FindFirstChildOfClass("ForceField") then
-                continue
-            end
+            if p.Character:FindFirstChildOfClass("ForceField") then continue end
             local hum = p.Character:FindFirstChildOfClass("Humanoid")
             local head = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HeadMesh")
             if hum and head and hum.Health > 0 then
@@ -273,6 +270,63 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
+-- ================= FLING =================
+local flingPart = nil
+
+local function stopFling()
+    if flingPart then
+        flingPart:Destroy()
+        flingPart = nil
+    end
+end
+
+local function startFling()
+    if flingPart then return end
+    if not LP.Character then return end
+    local hrp = LP.Character:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+
+    local part = Instance.new("Part")
+    part.Name = "PromtMZ_FlingPart"
+    part.Size = Vector3.new(5, 5, 5)
+    part.Shape = Enum.PartType.Ball
+    part.Anchored = false
+    part.CanCollide = true
+    part.Transparency = 0.7
+    part.Color = Color3.fromRGB(145, 55, 255)
+    part.Material = Enum.Material.Neon
+    part.Massless = true
+    part.Parent = workspace
+
+    local weld = Instance.new("WeldConstraint")
+    weld.Part0 = hrp
+    weld.Part1 = part
+    weld.Parent = part
+
+    local angular = Instance.new("BodyAngularVelocity")
+    angular.AngularVelocity = Vector3.new(0, 99999, 0)
+    angular.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
+    angular.Parent = part
+
+    flingPart = part
+end
+
+RunService.Heartbeat:Connect(function()
+    if not S.Fling then
+        if flingPart then stopFling() end
+        return
+    end
+    if not flingPart then startFling() end
+end)
+
+LP.CharacterAdded:Connect(function()
+    if S.Fling then
+        stopFling()
+        task.wait(0.5)
+        startFling()
+    end
+end)
+
 -- AntiAFK
 task.spawn(function()
     while task.wait(60) do
@@ -294,4 +348,4 @@ task.spawn(function()
     end
 end)
 
-print("[PromtMZ] functions загружены (ForceField ignore)")
+print("[PromtMZ] functions загружены (Fling + ForceField ignore)")

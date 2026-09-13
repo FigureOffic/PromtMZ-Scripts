@@ -14,7 +14,7 @@ if not S then
     return
 end
 
--- ================= ASPECT RATIO =================
+-- ================= ASPECT RATIO 4:3 =================
 local AspectConfig = {
     BaseFOV = 70,
 }
@@ -26,11 +26,7 @@ RunService.RenderStepped:Connect(function()
         cam.FieldOfView = AspectConfig.BaseFOV
         return
     end
-    local viewport = cam.ViewportSize
-    if viewport.Y <= 0 then return end
-    local realRatio = viewport.X / viewport.Y
-    local correction = math.clamp((S.AspectRatioValue or 1.0) / realRatio, 0.75, 1.35)
-    cam.FieldOfView = math.clamp(AspectConfig.BaseFOV * correction, 50, 100)
+    cam.FieldOfView = 60
 end)
 
 -- ================= MOTION BLUR =================
@@ -796,4 +792,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + aspect + motionblur + optimization)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + aspect4:3 + motionblur + optimization)")

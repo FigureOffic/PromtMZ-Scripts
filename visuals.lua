@@ -4,6 +4,7 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 local UIS = game:GetService("UserInputService")
 local Debris = game:GetService("Debris")
+local Lighting = game:GetService("Lighting")
 local LP = Players.LocalPlayer
 local Cam = workspace.CurrentCamera
 
@@ -12,6 +13,101 @@ if not S then
     warn("[PromtMZ] Сначала запусти main.lua!")
     return
 end
+
+-- ================= ASPECT RATIO =================
+local AspectConfig = {
+    BaseFOV = 70,
+}
+
+RunService.RenderStepped:Connect(function()
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    if not S.AspectRatio then
+        cam.FieldOfView = AspectConfig.BaseFOV
+        return
+    end
+    local viewport = cam.ViewportSize
+    if viewport.Y <= 0 then return end
+    local realRatio = viewport.X / viewport.Y
+    local correction = math.clamp((S.AspectRatioValue or 1.0) / realRatio, 0.75, 1.35)
+    cam.FieldOfView = math.clamp(AspectConfig.BaseFOV * correction, 50, 100)
+end)
+
+-- ================= MOTION BLUR =================
+local MotionBlur = Lighting:FindFirstChild("PromtMZ_MotionBlur")
+if not MotionBlur then
+    MotionBlur = Instance.new("BlurEffect")
+    MotionBlur.Name = "PromtMZ_MotionBlur"
+    MotionBlur.Size = 0
+    MotionBlur.Parent = Lighting
+end
+
+local lastCameraCFrame = nil
+
+RunService.RenderStepped:Connect(function(dt)
+    local cam = workspace.CurrentCamera
+    if not cam then return end
+    if not S.MotionBlur then
+        MotionBlur.Size = 0
+        lastCameraCFrame = cam.CFrame
+        return
+    end
+    if not lastCameraCFrame then
+        lastCameraCFrame = cam.CFrame
+        return
+    end
+    local current = cam.CFrame
+    local difference = lastCameraCFrame:ToObjectSpace(current)
+    local _, angle = difference:ToAxisAngle()
+    local blurAmount = math.clamp(angle * 2.5 * 100, 0, S.MotionBlurStrength or 12)
+    MotionBlur.Size = MotionBlur.Size + (blurAmount - MotionBlur.Size) * math.clamp(0.12 * 60 * dt, 0, 1)
+    lastCameraCFrame = current
+end)
+
+-- ================= OPTIMIZATION =================
+local OptimizationConfig = {
+    UpdateRate = 30,
+    DisableParticles = false,
+    DisablePostEffects = false,
+    DisableLights = false,
+}
+
+local optAccumulated = 0
+
+local function optimizeInstance(obj)
+    if OptimizationConfig.DisableParticles then
+        if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Beam") then
+            obj.Enabled = false
+        end
+    end
+    if OptimizationConfig.DisableLights then
+        if obj:IsA("PointLight") or obj:IsA("SpotLight") or obj:IsA("SurfaceLight") then
+            obj.Enabled = false
+        end
+    end
+    if OptimizationConfig.DisablePostEffects then
+        if obj:IsA("BloomEffect") or obj:IsA("SunRaysEffect") or obj:IsA("DepthOfFieldEffect") then
+            if obj.Name ~= "PromtMZ_MotionBlur" and obj.Name ~= "PromtMZ_Blur" then
+                obj.Enabled = false
+            end
+        end
+    end
+end
+
+RunService.Heartbeat:Connect(function(dt)
+    if not S.Optimization then return end
+    optAccumulated = optAccumulated + dt
+    local interval = 1 / math.max(OptimizationConfig.UpdateRate, 1)
+    if optAccumulated >= interval then
+        optAccumulated = 0
+        for _, obj in ipairs(workspace:GetDescendants()) do
+            optimizeInstance(obj)
+        end
+        for _, obj in ipairs(Lighting:GetChildren()) do
+            optimizeInstance(obj)
+        end
+    end
+end)
 
 -- ================= JUMP CIRCLES + LARGE CLICK PARTICLES =================
 local CONFIG = {
@@ -148,7 +244,7 @@ local function addGlossyHighlight(character)
     highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
     highlight.FillColor = Color3.fromRGB(235, 220, 195)
     highlight.FillTransparency = 0.2
-    highlight.OutlineTransparency = 1      -- ← убираем контур (просто заливка)
+    highlight.OutlineTransparency = 1
     highlight.Enabled = true
     highlight.Parent = character
 end
@@ -700,4 +796,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + aspect + motionblur + optimization)")

@@ -13,6 +13,287 @@ if not S then
     return
 end
 
+-- ================= TARGET ESP =================
+local TargetESPConfig = {
+    Style = "SharpOval",          -- "SharpOval", "Circle", "Square", "Triangle"
+    Color = Color3.fromRGB(235, 215, 185),
+    Size = 4,
+    Thickness = 0.08,
+    Transparency = 0.15,
+    RotationSpeed = 100,
+    Height = 3,
+    IgnoreForceField = true,
+}
+
+local targetESPHolder = nil
+local targetESPShape = nil
+local targetESPType = nil
+
+-- Утилита: проверка ForceField
+local function hasForceField(character)
+    return character:FindFirstChildOfClass("ForceField") ~= nil
+end
+
+-- Утилита: найти текущую цель (та, что под прицелом, или ближайшая без ForceField)
+local function findTarget()
+    -- 1. Проверяем, есть ли цель под прицелом мыши
+    local mouse = UIS:GetMouseLocation()
+    local ray = Cam:ViewportPointToRay(mouse.X, mouse.Y)
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {LP.Character}
+    local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
+    if result then
+        local char = result.Instance:FindFirstAncestorOfClass("Model")
+        if char and not hasForceField(char) then
+            local hum = char:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                local plr = Players:GetPlayerFromCharacter(char)
+                if plr and plr ~= LP then
+                    return char
+                end
+            end
+        end
+    end
+    -- 2. Если под прицелом нет — берём ближайшего без ForceField
+    local closest, shortest = nil, math.huge
+    if not LP.Character then return nil end
+    local myHrp = LP.Character:FindFirstChild("HumanoidRootPart")
+    if not myHrp then return nil end
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= LP and p.Character and not hasForceField(p.Character) then
+            local hum = p.Character:FindFirstChildOfClass("Humanoid")
+            if hum and hum.Health > 0 then
+                local hrp = p.Character:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local d = (myHrp.Position - hrp.Position).Magnitude
+                    if d < shortest and d < 200 then
+                        shortest = d
+                        closest = p.Character
+                    end
+                end
+            end
+        end
+    end
+    return closest
+end
+
+-- Утилита: создать SharpOval (острый овал через сегменты)
+local function createSharpOval(parent)
+    local folder = Instance.new("Folder")
+    folder.Name = "TargetESP_SharpOval"
+    folder.Parent = parent
+
+    local parts = {}
+    local segments = 12  -- количество сегментов
+    local radiusX = TargetESPConfig.Size
+    local radiusZ = TargetESPConfig.Size * 0.45  -- вытянутость
+
+    for i = 1, segments do
+        local angle = (i / segments) * math.pi * 2
+        local nextAngle = ((i + 1) / segments) * math.pi * 2
+
+        local p1 = Vector3.new(math.cos(angle) * radiusX, 0, math.sin(angle) * radiusZ)
+        local p2 = Vector3.new(math.cos(nextAngle) * radiusX, 0, math.sin(nextAngle) * radiusZ)
+
+        local mid = (p1 + p2) / 2
+        local length = (p2 - p1).Magnitude
+
+        local part = Instance.new("Part")
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.Material = Enum.Material.Neon
+        part.Color = TargetESPConfig.Color
+        part.Transparency = TargetESPConfig.Transparency
+        part.Size = Vector3.new(TargetESPConfig.Thickness, TargetESPConfig.Thickness, length)
+        part.CFrame = CFrame.lookAt(mid, p2)
+        part.Parent = folder
+        table.insert(parts, part)
+    end
+    return folder, parts
+end
+
+-- Утилита: создать Circle
+local function createCircle(parent)
+    local folder = Instance.new("Folder")
+    folder.Name = "TargetESP_Circle"
+    folder.Parent = parent
+
+    local part = Instance.new("Part")
+    part.Anchored = true
+    part.CanCollide = false
+    part.CanQuery = false
+    part.CanTouch = false
+    part.Material = Enum.Material.Neon
+    part.Color = TargetESPConfig.Color
+    part.Transparency = TargetESPConfig.Transparency
+    part.Shape = Enum.PartType.Cylinder
+    part.Size = Vector3.new(TargetESPConfig.Thickness, TargetESPConfig.Size * 2, TargetESPConfig.Size * 2)
+    part.CFrame = CFrame.new(0, 0, 0) * CFrame.Angles(0, 0, math.rad(90))
+    part.Parent = folder
+    return folder, {part}
+end
+
+-- Утилита: создать Square (4 линии)
+local function createSquare(parent)
+    local folder = Instance.new("Folder")
+    folder.Name = "TargetESP_Square"
+    folder.Parent = parent
+
+    local parts = {}
+    local s = TargetESPConfig.Size
+
+    local offsets = {
+        {Vector3.new(0, 0, -s), Vector3.new(s * 2, TargetESPConfig.Thickness, TargetESPConfig.Thickness)},
+        {Vector3.new(0, 0, s), Vector3.new(s * 2, TargetESPConfig.Thickness, TargetESPConfig.Thickness)},
+        {Vector3.new(-s, 0, 0), Vector3.new(TargetESPConfig.Thickness, TargetESPConfig.Thickness, s * 2)},
+        {Vector3.new(s, 0, 0), Vector3.new(TargetESPConfig.Thickness, TargetESPConfig.Thickness, s * 2)},
+    }
+
+    for _, off in ipairs(offsets) do
+        local part = Instance.new("Part")
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.Material = Enum.Material.Neon
+        part.Color = TargetESPConfig.Color
+        part.Transparency = TargetESPConfig.Transparency
+        part.Size = off[2]
+        part.CFrame = CFrame.new(off[1])
+        part.Parent = folder
+        table.insert(parts, part)
+    end
+    return folder, parts
+end
+
+-- Утилита: создать Triangle
+local function createTriangle(parent)
+    local folder = Instance.new("Folder")
+    folder.Name = "TargetESP_Triangle"
+    folder.Parent = parent
+
+    local parts = {}
+    local s = TargetESPConfig.Size
+    local points = {
+        Vector3.new(0, 0, s),
+        Vector3.new(-s * 0.87, 0, -s * 0.5),
+        Vector3.new(s * 0.87, 0, -s * 0.5),
+    }
+
+    local function makeLine(a, b)
+        local part = Instance.new("Part")
+        part.Anchored = true
+        part.CanCollide = false
+        part.CanQuery = false
+        part.CanTouch = false
+        part.Material = Enum.Material.Neon
+        part.Color = TargetESPConfig.Color
+        part.Transparency = TargetESPConfig.Transparency
+
+        local mid = (a + b) / 2
+        local length = (b - a).Magnitude
+        part.Size = Vector3.new(TargetESPConfig.Thickness, TargetESPConfig.Thickness, length)
+        part.CFrame = CFrame.lookAt(mid, b)
+        part.Parent = folder
+        table.insert(parts, part)
+    end
+
+    makeLine(points[1], points[2])
+    makeLine(points[2], points[3])
+    makeLine(points[3], points[1])
+    return folder, parts
+end
+
+-- Создание Target ESP для конкретного стиля
+local function createTargetESP(character, style)
+    if targetESPHolder then
+        targetESPHolder:Destroy()
+        targetESPHolder = nil
+        targetESPShape = nil
+    end
+
+    local holder = Instance.new("Part")
+    holder.Name = "TargetESP_Holder"
+    holder.Anchored = true
+    holder.CanCollide = false
+    holder.CanQuery = false
+    holder.CanTouch = false
+    holder.Transparency = 1
+    holder.Size = Vector3.new(0.1, 0.1, 0.1)
+    holder.Parent = workspace
+
+    local shape, parts
+    if style == "SharpOval" then
+        shape, parts = createSharpOval(holder)
+    elseif style == "Circle" then
+        shape, parts = createCircle(holder)
+    elseif style == "Square" then
+        shape, parts = createSquare(holder)
+    elseif style == "Triangle" then
+        shape, parts = createTriangle(holder)
+    else
+        shape, parts = createCircle(holder)
+    end
+
+    targetESPHolder = holder
+    targetESPShape = parts
+    targetESPType = style
+    return holder, parts
+end
+
+-- Уничтожение Target ESP
+local function destroyTargetESP()
+    if targetESPHolder then
+        targetESPHolder:Destroy()
+        targetESPHolder = nil
+        targetESPShape = nil
+        targetESPType = nil
+    end
+end
+
+-- ================= TARGET ESP UPDATE =================
+RunService.RenderStepped:Connect(function(dt)
+    if not S.TargetESP then
+        if targetESPHolder then destroyTargetESP() end
+        return
+    end
+
+    local target = findTarget()
+    if not target then
+        if targetESPHolder then destroyTargetESP() end
+        return
+    end
+
+    local hrp = target:FindFirstChild("HumanoidRootPart")
+    if not hrp then
+        if targetESPHolder then destroyTargetESP() end
+        return
+    end
+
+    -- Создаём ESP, если ещё нет или стиль изменился
+    if not targetESPHolder or targetESPType ~= TargetESPConfig.Style then
+        createTargetESP(target, TargetESPConfig.Style)
+    end
+
+    -- Обновляем позицию и вращение
+    if targetESPHolder and targetESPShape then
+        local baseCFrame = hrp.CFrame * CFrame.new(0, TargetESPConfig.Height - 3, 0)
+        local rotation = CFrame.Angles(0, math.rad(TargetESPConfig.RotationSpeed * tick() % 360), 0)
+        targetESPHolder.CFrame = baseCFrame * rotation
+
+        -- Обновляем цвет/прозрачность динамически (если меняешь в настройках)
+        for _, part in ipairs(targetESPShape) do
+            if part and part.Parent then
+                part.Color = TargetESPConfig.Color
+                part.Transparency = TargetESPConfig.Transparency
+            end
+        end
+    end
+end)
+
 -- ================= JUMP CIRCLES + LARGE CLICK PARTICLES =================
 local CONFIG = {
     JumpCircles = true,
@@ -231,7 +512,6 @@ TargetStroke.Transparency = 0.7
 TargetStroke.Thickness = 1
 TargetStroke.Parent = TargetMain
 
--- Head
 local HeadFrame = Instance.new("Frame")
 HeadFrame.Size = UDim2.fromOffset(54, 54)
 HeadFrame.Position = UDim2.fromOffset(9, 9)
@@ -254,7 +534,6 @@ HeadImage.ScaleType = Enum.ScaleType.Crop
 HeadImage.Parent = HeadFrame
 Instance.new("UICorner", HeadImage).CornerRadius = UDim.new(0, 8)
 
--- Info
 local Info = Instance.new("Frame")
 Info.Size = UDim2.new(1, -76, 1, -12)
 Info.Position = UDim2.fromOffset(72, 6)
@@ -297,7 +576,6 @@ HealthBar.BorderSizePixel = 0
 HealthBar.Parent = HealthBg
 Instance.new("UICorner", HealthBar).CornerRadius = UDim.new(1, 0)
 
--- TARGET LOGIC
 local currentTarget = nil
 
 local function getTarget()
@@ -310,6 +588,7 @@ local function getTarget()
     if not result then return nil end
     local character = result.Instance:FindFirstAncestorOfClass("Model")
     if not character then return nil end
+    if character:FindFirstChildOfClass("ForceField") then return nil end
     local humanoid = character:FindFirstChildOfClass("Humanoid")
     if not humanoid or humanoid.Health <= 0 then return nil end
     local player = Players:GetPlayerFromCharacter(character)
@@ -354,7 +633,6 @@ RunService.RenderStepped:Connect(function()
         if TargetMain.Visible then hideTarget() end
         return
     end
-
     local player, humanoid = getTarget()
     if player and humanoid then
         if player ~= currentTarget then
@@ -558,12 +836,13 @@ if not ok then return end
 
 local function getChar(p)
     if p.Character then
+        if p.Character:FindFirstChildOfClass("ForceField") then return nil end
         local head = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("HeadMesh")
         if head then return p.Character end
     end
     for _, obj in ipairs(workspace:GetChildren()) do
         if obj:IsA("Model") and obj.Name == p.Name then
-            if obj:FindFirstChildOfClass("Humanoid") then
+            if obj:FindFirstChildOfClass("Humanoid") and not obj:FindFirstChildOfClass("ForceField") then
                 return obj
             end
         end
@@ -703,4 +982,4 @@ Players.PlayerAdded:Connect(function(p)
     end
 end)
 
-print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music)")
+print("[PromtMZ] visuals загружены (particles + chams + targetHUD + music + targetESP)")

@@ -1,4 +1,4 @@
--- main.lua — PromtMZ Black & Purple Ultra Smooth GUI (with Fling)
+-- main.lua — PromtMZ Black & Purple Ultra Smooth GUI (Fling fixed)
 local UIS = game:GetService("UserInputService")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -52,7 +52,7 @@ local DESCRIPTIONS = {
     Spin = "Вращает персонажа вокруг оси",
     Magnet = "Притягивает к ближайшему игроку",
     TP = "Телепорт к ближайшему игроку",
-    Fling = "Раскидывает игроков вокруг тебя",
+    Fling = "Отбрасывает игроков при касании",
     Speed = "Увеличивает скорость",
     Fly = "Позволяет летать",
     Jump = "Увеличивает высоту прыжка",
@@ -1097,4 +1097,4 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
-print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен (Fling + Chams + TargetHUD + Music + Console)")
+print("[PromtMZ] Black & Purple Ultra Smooth GUI загружен (Fling fixed)")

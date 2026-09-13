@@ -15,13 +15,13 @@ end
 
 -- ================= TARGET ESP =================
 local TargetESPConfig = {
-    Style = "SharpOval",          -- "SharpOval", "Circle", "Square", "Triangle"
-    Color = Color3.fromRGB(235, 215, 185),
-    Size = 4,
-    Thickness = 0.08,
-    Transparency = 0.15,
+    Style = "SharpOval",
+    Color = Color3.fromRGB(255, 100, 200),
+    Size = 6,
+    Thickness = 0.25,
+    Transparency = 0.0,
     RotationSpeed = 100,
-    Height = 3,
+    Height = 4,
     IgnoreForceField = true,
 }
 
@@ -29,37 +29,16 @@ local targetESPHolder = nil
 local targetESPShape = nil
 local targetESPType = nil
 
--- Утилита: проверка ForceField
 local function hasForceField(character)
     return character:FindFirstChildOfClass("ForceField") ~= nil
 end
 
--- Утилита: найти текущую цель (та, что под прицелом, или ближайшая без ForceField)
 local function findTarget()
-    -- 1. Проверяем, есть ли цель под прицелом мыши
-    local mouse = UIS:GetMouseLocation()
-    local ray = Cam:ViewportPointToRay(mouse.X, mouse.Y)
-    local params = RaycastParams.new()
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    params.FilterDescendantsInstances = {LP.Character}
-    local result = workspace:Raycast(ray.Origin, ray.Direction * 1000, params)
-    if result then
-        local char = result.Instance:FindFirstAncestorOfClass("Model")
-        if char and not hasForceField(char) then
-            local hum = char:FindFirstChildOfClass("Humanoid")
-            if hum and hum.Health > 0 then
-                local plr = Players:GetPlayerFromCharacter(char)
-                if plr and plr ~= LP then
-                    return char
-                end
-            end
-        end
-    end
-    -- 2. Если под прицелом нет — берём ближайшего без ForceField
-    local closest, shortest = nil, math.huge
+    local closest, shortest = nil, 300
     if not LP.Character then return nil end
     local myHrp = LP.Character:FindFirstChild("HumanoidRootPart")
     if not myHrp then return nil end
+    
     for _, p in ipairs(Players:GetPlayers()) do
         if p ~= LP and p.Character and not hasForceField(p.Character) then
             local hum = p.Character:FindFirstChildOfClass("Humanoid")
@@ -67,7 +46,7 @@ local function findTarget()
                 local hrp = p.Character:FindFirstChild("HumanoidRootPart")
                 if hrp then
                     local d = (myHrp.Position - hrp.Position).Magnitude
-                    if d < shortest and d < 200 then
+                    if d < shortest then
                         shortest = d
                         closest = p.Character
                     end
@@ -78,16 +57,15 @@ local function findTarget()
     return closest
 end
 
--- Утилита: создать SharpOval (острый овал через сегменты)
 local function createSharpOval(parent)
     local folder = Instance.new("Folder")
     folder.Name = "TargetESP_SharpOval"
     folder.Parent = parent
 
     local parts = {}
-    local segments = 12  -- количество сегментов
+    local segments = 16
     local radiusX = TargetESPConfig.Size
-    local radiusZ = TargetESPConfig.Size * 0.45  -- вытянутость
+    local radiusZ = TargetESPConfig.Size * 0.45
 
     for i = 1, segments do
         local angle = (i / segments) * math.pi * 2
@@ -115,7 +93,6 @@ local function createSharpOval(parent)
     return folder, parts
 end
 
--- Утилита: создать Circle
 local function createCircle(parent)
     local folder = Instance.new("Folder")
     folder.Name = "TargetESP_Circle"
@@ -136,7 +113,6 @@ local function createCircle(parent)
     return folder, {part}
 end
 
--- Утилита: создать Square (4 линии)
 local function createSquare(parent)
     local folder = Instance.new("Folder")
     folder.Name = "TargetESP_Square"
@@ -169,7 +145,6 @@ local function createSquare(parent)
     return folder, parts
 end
 
--- Утилита: создать Triangle
 local function createTriangle(parent)
     local folder = Instance.new("Folder")
     folder.Name = "TargetESP_Triangle"
@@ -207,7 +182,6 @@ local function createTriangle(parent)
     return folder, parts
 end
 
--- Создание Target ESP для конкретного стиля
 local function createTargetESP(character, style)
     if targetESPHolder then
         targetESPHolder:Destroy()
@@ -235,7 +209,7 @@ local function createTargetESP(character, style)
     elseif style == "Triangle" then
         shape, parts = createTriangle(holder)
     else
-        shape, parts = createCircle(holder)
+        shape, parts = createSharpOval(holder)
     end
 
     targetESPHolder = holder
@@ -244,7 +218,6 @@ local function createTargetESP(character, style)
     return holder, parts
 end
 
--- Уничтожение Target ESP
 local function destroyTargetESP()
     if targetESPHolder then
         targetESPHolder:Destroy()
@@ -254,7 +227,6 @@ local function destroyTargetESP()
     end
 end
 
--- ================= TARGET ESP UPDATE =================
 RunService.RenderStepped:Connect(function(dt)
     if not S.TargetESP then
         if targetESPHolder then destroyTargetESP() end
@@ -273,18 +245,15 @@ RunService.RenderStepped:Connect(function(dt)
         return
     end
 
-    -- Создаём ESP, если ещё нет или стиль изменился
     if not targetESPHolder or targetESPType ~= TargetESPConfig.Style then
         createTargetESP(target, TargetESPConfig.Style)
     end
 
-    -- Обновляем позицию и вращение
     if targetESPHolder and targetESPShape then
         local baseCFrame = hrp.CFrame * CFrame.new(0, TargetESPConfig.Height - 3, 0)
         local rotation = CFrame.Angles(0, math.rad(TargetESPConfig.RotationSpeed * tick() % 360), 0)
         targetESPHolder.CFrame = baseCFrame * rotation
 
-        -- Обновляем цвет/прозрачность динамически (если меняешь в настройках)
         for _, part in ipairs(targetESPShape) do
             if part and part.Parent then
                 part.Color = TargetESPConfig.Color
